@@ -21,28 +21,32 @@ import java.util.List;
  * Grant.
  */
 public interface Grant {
-  
-  /**
-   * Checks if there is an access granted.
-   * @return <code>true</code> if access granted
-   */
-  boolean hasAccess();
-  
-  /**
-   * Gets clause being engaged.
-   * @return clause
-   */
-  String getClause();
-  
-  /**
-   * Gets user agents from the group.
-   * @return user agents
-   */
-  List<String> getUserAgents();
-  
-  /**
-   * Gets crawl delay from the group.
-   * @return crawl delay (in seconds) or <code>null</code> if no crawl delay defined
-   */
-  Integer getCrawlDelay();
+
+    /**
+     * Checks if there is an access granted.
+     *
+     * @return <code>true</code> if access granted
+     */
+    boolean hasAccess();
+
+    /**
+     * Gets clause being engaged.
+     *
+     * @return clause
+     */
+    String getClause();
+
+    /**
+     * Gets user agents from the group.
+     *
+     * @return user agents
+     */
+    List<String> getUserAgents();
+
+    /**
+     * Gets crawl delay from the group.
+     *
+     * @return crawl delay (in seconds) or <code>null</code> if no crawl delay defined
+     */
+    Integer getCrawlDelay();
 }

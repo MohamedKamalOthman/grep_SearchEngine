@@ -23,58 +23,60 @@ import java.util.List;
  * Access.
  */
 class Access implements Grant {
-  private final Group group;
-  private final String source;
-  private final String clause;
-  private final boolean accessAllowed;
+    private final Group group;
+    private final String source;
+    private final String clause;
+    private final boolean accessAllowed;
 
-  /**
-   * Creates instance of the access.
-   * @param group group
-   * @param source source of the information
-   * @param clause access path
-   * @param accessAllowed access to the path
-   */
-  public Access(Group group, String source, String clause, boolean accessAllowed) {
-    this.group = group;
-    this.source = source;
-    this.clause = clause;
-    this.accessAllowed = accessAllowed;
-  }
+    /**
+     * Creates instance of the access.
+     *
+     * @param group         group
+     * @param source        source of the information
+     * @param clause        access path
+     * @param accessAllowed access to the path
+     */
+    public Access(Group group, String source, String clause, boolean accessAllowed) {
+        this.group = group;
+        this.source = source;
+        this.clause = clause;
+        this.accessAllowed = accessAllowed;
+    }
 
-  @Override
-  public String getClause() {
-    return clause;
-  }
-  
-  @Override
-  public boolean hasAccess() {
-    return accessAllowed;
-  }
+    @Override
+    public String getClause() {
+        return clause;
+    }
 
-  @Override
-  public Integer getCrawlDelay() {
-    return group!=null? group.getCrawlDelay(): null;
-  }
+    @Override
+    public boolean hasAccess() {
+        return accessAllowed;
+    }
 
-  @Override
-  public List<String> getUserAgents() {
-    return group!=null? group.getUserAgents(): Collections.emptyList();
-  }
-  
-  /**
-   * Checks if path matches access path
-   * @param path path to check
-   * @param matchingStrategy matcher
-   * @return <code>true</code> if path matches access path
-   */
-  public boolean matches(String path, MatchingStrategy matchingStrategy) {
-    return path!=null && matchingStrategy.matches(clause, path);
-  }
-  
-  @Override
-  public String toString() {
-    return source;
-  }
-  
+    @Override
+    public Integer getCrawlDelay() {
+        return group != null ? group.getCrawlDelay() : null;
+    }
+
+    @Override
+    public List<String> getUserAgents() {
+        return group != null ? group.getUserAgents() : Collections.emptyList();
+    }
+
+    /**
+     * Checks if path matches access path
+     *
+     * @param path             path to check
+     * @param matchingStrategy matcher
+     * @return <code>true</code> if path matches access path
+     */
+    public boolean matches(String path, MatchingStrategy matchingStrategy) {
+        return path != null && matchingStrategy.matches(clause, path);
+    }
+
+    @Override
+    public String toString() {
+        return source;
+    }
+
 }

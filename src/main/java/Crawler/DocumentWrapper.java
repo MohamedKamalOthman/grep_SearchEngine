@@ -2,6 +2,7 @@ package Crawler;
 
 
 import org.jsoup.nodes.Document;
+
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
@@ -10,10 +11,9 @@ public class DocumentWrapper {
     public String html;
     public long crc;
 
-    DocumentWrapper(Document Doc)
-    {
+    DocumentWrapper(Document Doc) {
         doc = Doc;
-        if(doc == null)
+        if (doc == null)
             return;
 
         html = doc.html();

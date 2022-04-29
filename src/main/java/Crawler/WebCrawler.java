@@ -50,7 +50,7 @@ public class WebCrawler implements Runnable {
                 String NextUrl = NextLink.toString();
                 String NextHost = NextLink.getHost();
                 if (State.isAllowedByRobotsTxt(NextLink.getProtocol() + "://" + NextHost, NextUrl)) {
-                    if(State.saveUrl(NextUrl))
+                    if (State.saveUrl(NextUrl))
                         if (!Objects.equals(host, NextHost))
                             State.incrementHost(NextHost);
                 }

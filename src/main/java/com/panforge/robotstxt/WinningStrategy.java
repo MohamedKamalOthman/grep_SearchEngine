@@ -21,29 +21,31 @@ import java.util.List;
  * Winning strategy.
  * <p>
  * Determines how a winner will be selected.
+ *
  * @see MatchingStrategy
  */
 interface WinningStrategy {
-  
-  /**
-   * Selects a single winner amongst the candidates.
-   * @param candidates list of candidates
-   * @return a winner or {@code null} if no winner (for example: because empty list of candidates)
-   */
-  Access selectWinner(List<Access> candidates);
-  
-  WinningStrategy DEFAULT  = (candidates)->{
-    Access winningDisallow = candidates.stream().filter(acc->acc.hasAccess()==false).sorted((l,r)->r.getClause().length()-l.getClause().length()).findFirst().orElse(null);
-    Access winningAllow = candidates.stream().filter(acc->acc.hasAccess()==true).sorted((l,r)->r.getClause().length()-l.getClause().length()).findFirst().orElse(null);
 
-    if (winningAllow!=null && winningAllow.getClause().length()>=(winningDisallow!=null? winningDisallow.getClause().length(): 0)) {
-      return winningAllow;
-    }
+    /**
+     * Selects a single winner amongst the candidates.
+     *
+     * @param candidates list of candidates
+     * @return a winner or {@code null} if no winner (for example: because empty list of candidates)
+     */
+    Access selectWinner(List<Access> candidates);
 
-    if (winningDisallow!=null) {
-      return winningDisallow;
-    }
-    
-    return null;
-  };
+    WinningStrategy DEFAULT = (candidates) -> {
+        Access winningDisallow = candidates.stream().filter(acc -> acc.hasAccess() == false).sorted((l, r) -> r.getClause().length() - l.getClause().length()).findFirst().orElse(null);
+        Access winningAllow = candidates.stream().filter(acc -> acc.hasAccess() == true).sorted((l, r) -> r.getClause().length() - l.getClause().length()).findFirst().orElse(null);
+
+        if (winningAllow != null && winningAllow.getClause().length() >= (winningDisallow != null ? winningDisallow.getClause().length() : 0)) {
+            return winningAllow;
+        }
+
+        if (winningDisallow != null) {
+            return winningDisallow;
+        }
+
+        return null;
+    };
 }

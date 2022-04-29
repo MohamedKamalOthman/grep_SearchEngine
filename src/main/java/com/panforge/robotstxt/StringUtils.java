@@ -28,6 +28,7 @@ class StringUtils {
 
     /**
      * Find the longest common prefix between {@code a} and {@code b} strings.
+     *
      * @param a - text to compare
      * @param b - text to compare with
      * @return longest common prefix

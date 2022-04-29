@@ -19,12 +19,12 @@ package com.panforge.robotstxt;
  * Selection match.
  */
 class Match {
-  public final Group group;
-  public final Access access;
+    public final Group group;
+    public final Access access;
 
-  public Match(Group group, Access access) {
-    this.group = group;
-    this.access = access;
-  }
-  
+    public Match(Group group, Access access) {
+        this.group = group;
+        this.access = access;
+    }
+
 }

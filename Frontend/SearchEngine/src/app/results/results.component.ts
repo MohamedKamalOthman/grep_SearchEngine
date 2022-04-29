@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Router, ActivatedRoute, ParamMap } from '@angular/router';
+import {Component, OnInit} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Router, ActivatedRoute, ParamMap} from '@angular/router';
+
 @Component({
   selector: 'app-results',
   templateUrl: './results.component.html',
@@ -11,8 +12,11 @@ export class ResultsComponent implements OnInit {
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router
-  ) {}
+  ) {
+  }
+
   results: any;
+
   ngOnInit(): void {
     const routeParams = this.route.snapshot.paramMap;
     const q = routeParams.get('q');

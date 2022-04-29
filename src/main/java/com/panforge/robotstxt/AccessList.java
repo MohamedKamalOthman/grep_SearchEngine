@@ -25,58 +25,58 @@ import java.util.stream.Collectors;
  */
 class AccessList {
 
-  private final List<Access> accessList = new ArrayList<Access>();
+    private final List<Access> accessList = new ArrayList<Access>();
 
-  /**
-   * Adds access to the list.
-   *
-   * @param access access
-   */
-  public void addAccess(Access access) {
-    accessList.add(access);
-  }
-
-  /**
-   * Imports entire access list from another instance.
-   *
-   * @param ref another instance
-   */
-  public void importAccess(AccessList ref) {
-    accessList.addAll(ref.accessList);
-  }
-
-  @Override
-  public String toString() {
-    return accessList.stream().map(Object::toString).collect(Collectors.joining("\n"));
-  }
-
-  /**
-   * Select any access matching input path.
-   *
-   * @param relativePath path to test
-   * @param matchingStrategy matcher
-   * @return list of matching elements
-   */
-  public List<Access> select(String relativePath, MatchingStrategy matchingStrategy) {
-    ArrayList<Access> allMatching = new ArrayList<Access>();
-
-    if (relativePath != null) {
-      for (Access acc : accessList) {
-        if (acc.matches(relativePath, matchingStrategy)) {
-          allMatching.add(acc);
-        }
-      }
+    /**
+     * Adds access to the list.
+     *
+     * @param access access
+     */
+    public void addAccess(Access access) {
+        accessList.add(access);
     }
 
-    return allMatching;
-  }
+    /**
+     * Imports entire access list from another instance.
+     *
+     * @param ref another instance
+     */
+    public void importAccess(AccessList ref) {
+        accessList.addAll(ref.accessList);
+    }
 
-  /**
-   * Lists all accesses.
-   *
-   * @return list of all accesses
-   */
-  public List<Access> listAll() {
-    return accessList;
-  }
+    @Override
+    public String toString() {
+        return accessList.stream().map(Object::toString).collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Select any access matching input path.
+     *
+     * @param relativePath     path to test
+     * @param matchingStrategy matcher
+     * @return list of matching elements
+     */
+    public List<Access> select(String relativePath, MatchingStrategy matchingStrategy) {
+        ArrayList<Access> allMatching = new ArrayList<Access>();
+
+        if (relativePath != null) {
+            for (Access acc : accessList) {
+                if (acc.matches(relativePath, matchingStrategy)) {
+                    allMatching.add(acc);
+                }
+            }
+        }
+
+        return allMatching;
+    }
+
+    /**
+     * Lists all accesses.
+     *
+     * @return list of all accesses
+     */
+    public List<Access> listAll() {
+        return accessList;
+    }
 }

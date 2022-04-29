@@ -11,7 +11,7 @@ public class FileHtmlPageSaver implements IHtmlPageSaver {
     private final String PathName;
     private IdbManager Manager;
 
-    public FileHtmlPageSaver(String pathName,IdbManager manager) {
+    public FileHtmlPageSaver(String pathName, IdbManager manager) {
         PathName = pathName;
         Manager = manager;
     }
@@ -33,7 +33,7 @@ public class FileHtmlPageSaver implements IHtmlPageSaver {
             myWriter.write(WDoc.html);
             myWriter.close();
             System.out.println("Successfully wrote to the file.");
-            Manager.savePage(Url,WDoc.crc,false);
+            Manager.savePage(Url, WDoc.crc, false);
             System.out.println("Successfully wrote to Collection.");
         } catch (IOException e) {
             System.out.println("An error occurred.");

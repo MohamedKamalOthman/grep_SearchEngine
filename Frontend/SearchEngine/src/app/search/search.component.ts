@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRoute, ParamMap } from '@angular/router';
-import { FormBuilder, Validators } from '@angular/forms';
+import {Component, OnInit} from '@angular/core';
+import {Router, ActivatedRoute, ParamMap} from '@angular/router';
+import {FormBuilder, Validators} from '@angular/forms';
 
 @Component({
   selector: 'app-search',
@@ -9,18 +9,24 @@ import { FormBuilder, Validators } from '@angular/forms';
 })
 export class SearchComponent implements OnInit {
 
-  constructor(private route: Router,private fb : FormBuilder) {}
-  get q () { return this.Form.get('q');}
+  constructor(private route: Router, private fb: FormBuilder) {
+  }
+
+  get q() {
+    return this.Form.get('q');
+  }
 
   Form = this.fb.group(
     {
-      q : ['',[ Validators.required]]
+      q: ['', [Validators.required]]
     }
   );
+
   ngOnInit(): void {
   }
-  search():void{
+
+  search(): void {
     console.log(this.q);
-    this.route.navigate(['/result',{q : this.q?.value }]);
+    this.route.navigate(['/result', {q: this.q?.value}]);
   }
 }

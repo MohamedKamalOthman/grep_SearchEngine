@@ -5,6 +5,7 @@ import Pages.IHtmlPageSaver;
 import Pages.IUrlListHandler;
 import com.panforge.robotstxt.RobotsTxt;
 import org.jsoup.nodes.Document;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.BlockingQueue;
@@ -18,18 +19,17 @@ public class WebCrawlerState {
     private static final ConcurrentHashMap<String, RobotsTxt> RobotsTxtsMap = new ConcurrentHashMap<>();
     private IdbManager Manager;
 
-    WebCrawlerState(int id, IUrlListHandler urlListHandler, IHtmlPageSaver htmlPageSaver,IdbManager manager) {
+    WebCrawlerState(int id, IUrlListHandler urlListHandler, IHtmlPageSaver htmlPageSaver, IdbManager manager) {
         ID = id;
         UrlListHandler = urlListHandler;
         HtmlPageSaver = htmlPageSaver;
-        Manager=manager;
+        Manager = manager;
     }
 
-//  crawlers status list-> who finished who continued
+    //  crawlers status list-> who finished who continued
     protected final static BlockingQueue<String> AllLinks = new LinkedBlockingQueue<>();
 
-    public boolean isUrlVisited(String URL)
-    {
+    public boolean isUrlVisited(String URL) {
         return UrlListHandler.contains(URL);
     }
 
@@ -44,7 +44,7 @@ public class WebCrawlerState {
 
     public boolean isAllowedByRobotsTxt(String HostUrl, String Url) {
         RobotsTxt RobotsTxtFile = RobotsTxtsMap.get(HostUrl);
-        if(RobotsTxtFile != null)
+        if (RobotsTxtFile != null)
             return RobotsTxtFile.query(null, Url);
 
         try {
@@ -57,18 +57,28 @@ public class WebCrawlerState {
         RobotsTxtsMap.put(HostUrl, RobotsTxtFile);
         return RobotsTxtFile.query(null, Url);
     }
-    public String getNextUrl(){
+
+    public String getNextUrl() {
         return Manager.fetchUrl();
     }
-    public void urlCrawled(String url){
-        Manager.updateUrl(url,2);
+
+    public void urlCrawled(String url) {
+        Manager.updateUrl(url, 2);
     }
-    public boolean saveUrl(String url){
-        return Manager.saveUrl(url,0);
+
+    public boolean saveUrl(String url) {
+        return Manager.saveUrl(url, 0);
     }
-    public boolean urlExists(String url){
+
+    public boolean urlExists(String url) {
         return Manager.searchUrl(url);
     }
-    public boolean docExists(long docHash) {return Manager.docExists(docHash);}
-    public void incrementHost(String host) {Manager.incrementHost(host);}
+
+    public boolean docExists(long docHash) {
+        return Manager.docExists(docHash);
+    }
+
+    public void incrementHost(String host) {
+        Manager.incrementHost(host);
+    }
 }

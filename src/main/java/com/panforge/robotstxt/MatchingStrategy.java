@@ -17,6 +17,7 @@ package com.panforge.robotstxt;
 
 import static com.panforge.robotstxt.URLDecoder.decode;
 import static com.panforge.robotstxt.WildcardsCompiler.compile;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,36 +30,36 @@ import java.util.regex.Pattern;
  */
 interface MatchingStrategy {
 
-  /**
-   * Matches given path with a pattern.
-   *
-   * @param pattern pattern
-   * @param pathToTest path to test
-   * @return <code>true</code> if match
-   */
-  boolean matches(String pattern, String pathToTest);
+    /**
+     * Matches given path with a pattern.
+     *
+     * @param pattern    pattern
+     * @param pathToTest path to test
+     * @return <code>true</code> if match
+     */
+    boolean matches(String pattern, String pathToTest);
 
-  /**
-   * This strategy recognizes (*) and ($) as wildcards.
-   */
-  MatchingStrategy DEFAULT = (pattern, pathToTest) -> {
-    if (pathToTest == null) {
-      return false;
-    }
-    if (pattern == null || pattern.isEmpty()) {
-      return true;
-    }
+    /**
+     * This strategy recognizes (*) and ($) as wildcards.
+     */
+    MatchingStrategy DEFAULT = (pattern, pathToTest) -> {
+        if (pathToTest == null) {
+            return false;
+        }
+        if (pattern == null || pattern.isEmpty()) {
+            return true;
+        }
 
-    String relativePath = decode(pathToTest);
-    try {
-      Pattern pt = compile(pattern);
-      // Protection against Regular Expression Denial of Service.
-      // https://www.owasp.org/index.php/Regular_expression_Denial_of_Service_-_ReDoS
-      // @author vishnu rao
-      Matcher timeBoundMatcher = TimeLimitedMatcherFactory.matcher(pt, relativePath);
-      return timeBoundMatcher.find() && timeBoundMatcher.start() == 0;
-    } catch (TimeLimitedMatcherFactory.RegExpTimeoutException e) {
-      return false;
-    }
-  };
+        String relativePath = decode(pathToTest);
+        try {
+            Pattern pt = compile(pattern);
+            // Protection against Regular Expression Denial of Service.
+            // https://www.owasp.org/index.php/Regular_expression_Denial_of_Service_-_ReDoS
+            // @author vishnu rao
+            Matcher timeBoundMatcher = TimeLimitedMatcherFactory.matcher(pt, relativePath);
+            return timeBoundMatcher.find() && timeBoundMatcher.start() == 0;
+        } catch (TimeLimitedMatcherFactory.RegExpTimeoutException e) {
+            return false;
+        }
+    };
 }
