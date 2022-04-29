@@ -1,6 +1,7 @@
 package Crawler;
 
 import Pages.IHtmlPageSaver;
+import org.apache.catalina.Manager;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -10,6 +11,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
 
 public class WebCrawler implements Runnable {
@@ -39,21 +42,27 @@ public class WebCrawler implements Runnable {
         if (doc != null && !State.docExists(WDoc.crc)) {
             State.saveDocument(WDoc, Url);
             // TODO Bulk Insert All Links
-            for (Element link : doc.select("a[href]")) {
-                URL NextLink;
-                try {
-                    //Normalize url
-                    NextLink = new URL(URI.create(link.absUrl("href").toLowerCase()).normalize().toString());
-                } catch (MalformedURLException e) {
-                    continue;
-                }
-                String NextUrl = NextLink.toString();
-                String NextHost = NextLink.getHost();
-                if (State.isAllowedByRobotsTxt(NextLink.getProtocol() + "://" + NextHost, NextUrl)) {
-                    if (State.saveUrl(NextUrl))
+            if(State.isFinished() == false){
+                ArrayList<String> urls = new ArrayList<>();
+                ArrayList<String> hosts = new ArrayList<>();
+                for (Element link : doc.select("a[href]")) {
+                    URL NextLink;
+                    try {
+                        //Normalize url
+                        NextLink = new URL(URI.create(link.absUrl("href").toLowerCase()).normalize().toString());
+                    } catch (MalformedURLException e) {
+                        continue;
+                    }
+                    String NextUrl = NextLink.toString();
+                    String NextHost = NextLink.getHost();
+                    if (State.isAllowedByRobotsTxt(NextLink.getProtocol() + "://" + NextHost, NextUrl)) {
+                        urls.add(NextUrl);
                         if (!Objects.equals(host, NextHost))
-                            State.incrementHost(NextHost);
+                            hosts.add(NextHost);
+                    }
                 }
+                State.saveUrls(urls);
+                State.incrementHosts(hosts);
             }
         }
         State.urlCrawled(Url);

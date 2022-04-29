@@ -39,6 +39,10 @@ import java.net.URL;
 public class PageIndexer {
     private static IdbManager Manager;
     private final String PathName;
+    private static long currentHash = 0;
+    private static long count = 0;
+    private static String currentUrl = "";
+
     static HashSet<String> stopWords = new HashSet<>(Arrays.asList(new String[]{
             "a", "an", "and", "are", "as", "at", "be", "but", "by",
             "for", "if", "in", "into", "is", "it",
@@ -46,7 +50,7 @@ public class PageIndexer {
             "that", "the", "their", "then", "there", "these",
             "they", "this", "to", "was", "will", "with"
     }));
-    static int count = 0;
+
 
     public PageIndexer(String pathName, IdbManager manager) {
         this.Manager = manager;
@@ -88,26 +92,41 @@ public class PageIndexer {
     public void StartIndexing() {
         Document doc = Manager.getUrlForIndexing();
         System.out.println(doc.toString());
-        int hash = (int) doc.get("hash");
+        long hash = (long) doc.get("hash");
         String url = (String) doc.get("url");
         File file = new File(PathName + hash + ".html");
         try {
             org.jsoup.nodes.Document html = Jsoup.parse(file, null);
-            String title = html.title();
-            try {
-                var words = stem(title);
-                for (String word : words) {
-                    // TODO Generate Word Occurrence Data
-                    // TODO Save Occurrence in Database
-                    // HELLO WORLD
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            currentUrl = url;
+            currentHash = hash;
+            count = 0;
+            htmlparser(html);
+            Manager.bulkWriteIndexer();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private static void htmlparser(Node element) {
+        try {
+            for (Node n : element.childNodes()) {
+            if (n instanceof TextNode tNode && !tNode.isBlank()) {
+                var split = tNode.text().split("\\s+");
+                for (var exactWord : split) {
+                    var stemmed = stem(exactWord);
+                    count++;
+                    if (stemmed.isEmpty() || exactWord.isBlank())
+                        continue;
+                    Manager.insertOccurrence(currentUrl, stemmed.get(0), "body", count, currentHash, exactWord, tNode.text());
+                }
+            } else {
+                htmlparser(n);
+            }
+        }
+        }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
 
     public static void main(String[] args) {
         dbManager db = new dbManager();
@@ -122,51 +141,6 @@ public class PageIndexer {
 //        }
 //        for (String word : test)
 //            System.out.println(word);
-        String Url = "https://en.wikiversity.org/wiki/Assistant_teacher_course";
-        org.jsoup.nodes.Document doc = PageIndexer.request(Url);
-        for (int i = 0; i < 10; i++) {
-            count = 0;
-            pageIndexer.htmlparser(doc);
-            Manager.bulkWriteIndexer();
-        }
-    }
-
-    private static void htmlparser(Node element) {
-        try {
-            for (Node n : element.childNodes()) {
-            if (n instanceof TextNode tNode && !tNode.isBlank()) {
-                var split = tNode.text().split("\\s+");
-                for (var exactWord : split) {
-                    var stemmed = stem(exactWord);
-                    count++;
-                    if (stemmed.isEmpty() || exactWord.isBlank())
-                        continue;
-                    Manager.insertOccurrence("https://stackoverflow.com/", stemmed.get(0), "header", count, 256, exactWord, tNode.text());
-                }
-            } else {
-                htmlparser(n);
-            }
-        }
-        }catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-
-    private static org.jsoup.nodes.Document request(String Url) {
-        try {
-            Connection con = Jsoup.connect(Url);
-            org.jsoup.nodes.Document doc = con.get();
-            if (con.response().statusCode() == 200) {
-                String title = doc.title();
-                System.out.println("Title: " + title);
-                return doc;
-            }
-            return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
 
     }
-
 }

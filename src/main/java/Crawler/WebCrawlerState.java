@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -19,13 +20,18 @@ public class WebCrawlerState {
     private static final ConcurrentHashMap<String, RobotsTxt> RobotsTxtsMap = new ConcurrentHashMap<>();
     private IdbManager Manager;
 
+    public static boolean finished = false;
+
+
     WebCrawlerState(int id, IUrlListHandler urlListHandler, IHtmlPageSaver htmlPageSaver, IdbManager manager) {
         ID = id;
         UrlListHandler = urlListHandler;
         HtmlPageSaver = htmlPageSaver;
         Manager = manager;
     }
-
+    public boolean isFinished(){
+        return finished;
+    }
     //  crawlers status list-> who finished who continued
     protected final static BlockingQueue<String> AllLinks = new LinkedBlockingQueue<>();
 
@@ -70,6 +76,12 @@ public class WebCrawlerState {
         return Manager.saveUrl(url, 0);
     }
 
+    public boolean saveUrls(ArrayList<String> urls) {
+        boolean result =  Manager.saveUrls(urls);
+        finished = Manager.isFinishedCrawling();
+        return result;
+    }
+
     public boolean urlExists(String url) {
         return Manager.searchUrl(url);
     }
@@ -80,5 +92,9 @@ public class WebCrawlerState {
 
     public void incrementHost(String host) {
         Manager.incrementHost(host);
+    }
+
+    public void incrementHosts(ArrayList<String> hosts) {
+        Manager.incrementHosts(hosts);
     }
 }

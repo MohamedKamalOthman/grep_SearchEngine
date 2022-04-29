@@ -28,6 +28,8 @@ public class dbManager implements IdbManager {
     protected MongoCollection<Document> Popularity;
     protected static List indexerBulkWrite = new ArrayList();
 
+    public static boolean finishedCrawling = false;
+
     public dbManager() {
         MongoClient mongoClient = MongoClients.create("mongodb://admin:pass@mongo-dev.demosfortest.com:27017/");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
@@ -55,11 +57,18 @@ public class dbManager implements IdbManager {
         Crawler.insertOne(document);
         return true;
          */
+
+        long count = Crawler.countDocuments();
+        if(count >= 5100)
+        {
+            return false;
+        }
         Document query = new Document().append("url", url);
         Bson updates = Updates.combine(
                 Updates.setOnInsert("crawled", crawled)
         );
         UpdateOptions options = new UpdateOptions().upsert(true);
+
         try {
             UpdateResult result = Crawler.updateOne(query, updates, options);
             return result.getUpsertedId() != null;
@@ -68,6 +77,43 @@ public class dbManager implements IdbManager {
             return false;
         }
     }
+
+    public boolean saveUrls(ArrayList<String> urls) {
+        long count = Crawler.countDocuments();
+        if(count >= 5100)
+        {
+            finishedCrawling = true;
+            return false;
+        }
+        List crawlerBulkWrite = new ArrayList();
+
+        for (String url: urls) {
+            Document query = new Document().append("url", url);
+            Bson updates = Updates.combine(
+                    Updates.setOnInsert("crawled", 0)
+            );
+            UpdateOptions options = new UpdateOptions().upsert(true);
+            crawlerBulkWrite.add(new UpdateOneModel(query, updates, options));
+        }
+
+        try {
+            var result = Crawler.bulkWrite(crawlerBulkWrite);
+            count = Crawler.countDocuments();
+            if(count >= 5100)
+            {
+                finishedCrawling = true;
+            }
+            return result.getInsertedCount() != 0;
+        } catch (MongoException me) {
+            System.err.println("Unable to update due to an error: " + me);
+            return false;
+        }
+    }
+
+    public boolean isFinishedCrawling(){
+        return finishedCrawling;
+    }
+
 
     public boolean searchUrl(String url) {
         Document query = new Document().append("url", url);
@@ -141,7 +187,27 @@ public class dbManager implements IdbManager {
         }
     }
 
-    public void insertOccurrence(String url, String value, String text_type, long location, int hash, String exactWord, String paragraph) {
+    public boolean incrementHosts(ArrayList<String> hosts) {
+        List popularityBulkWrtie = new ArrayList();
+        for (String host: hosts) {
+            Document query = new Document().append("host", host);
+            Bson updates = Updates.combine(
+                    Updates.inc("refCount", 1)
+            );
+            UpdateOptions options = new UpdateOptions().upsert(true);
+            popularityBulkWrtie.add(new UpdateOneModel(query,updates,options));
+        }
+
+        try {
+            var result = Popularity.bulkWrite(popularityBulkWrtie);
+            return result.getInsertedCount() != 0;
+        } catch (MongoException me) {
+            System.err.println("Unable to update due to an error: " + me);
+            return false;
+        }
+    }
+
+    public void insertOccurrence(String url, String value, String text_type, long location, long hash, String exactWord, String paragraph) {
         Document query = new Document().append("value", value);
 //        query.append("occurrences.url",url);
 //        Updates.

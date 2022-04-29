@@ -13,6 +13,7 @@ import java.util.zip.Checksum;
 
 import Database.IdbManager;
 import Database.dbManager;
+import Indexer.PageIndexer;
 import Pages.FileHtmlPageSaver;
 import Pages.FileUrlListHandler;
 import com.panforge.robotstxt.RobotsTxt;
@@ -36,15 +37,15 @@ public class CrawlerTest {
 //        System.out.println(hasAccess);
 
         // Must Start With Adding Our Start Pages For The First Run Only
-
+        String pathName = "." + File.separator + "Files" + File.separator;
         ArrayList<WebCrawler> crawlers = new ArrayList<>();
-        FileHtmlPageSaver HtmlSaver = new FileHtmlPageSaver("." + File.separator + "Files" + File.separator, Manager);
+        FileHtmlPageSaver HtmlSaver = new FileHtmlPageSaver(pathName, Manager);
         FileUrlListHandler UrlListHandler = new FileUrlListHandler("Urls.txt");
-        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(1, UrlListHandler, HtmlSaver, Manager)));
-        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(2, UrlListHandler, HtmlSaver, Manager)));
-        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(3, UrlListHandler, HtmlSaver, Manager)));
-        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(4, UrlListHandler, HtmlSaver, Manager)));
-        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(5, UrlListHandler, HtmlSaver, Manager)));
+        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(1, UrlListHandler, HtmlSaver, Manager)));
+        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(2, UrlListHandler, HtmlSaver, Manager)));
+        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(3, UrlListHandler, HtmlSaver, Manager)));
+        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(4, UrlListHandler, HtmlSaver, Manager)));
+        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(5, UrlListHandler, HtmlSaver, Manager)));
         for (WebCrawler w : crawlers) {
             try {
                 w.getThread().join();
@@ -52,6 +53,11 @@ public class CrawlerTest {
                 e.printStackTrace();
             }
         }
+        // Finished Crawling
+        // Start Indexing
+        PageIndexer indexer = new PageIndexer(pathName, Manager);
+        indexer.StartIndexing();
+
     }
 }
 
