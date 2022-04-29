@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @RestController
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class })
 public class SearchEngineBackendApplication {
@@ -22,11 +27,30 @@ public class SearchEngineBackendApplication {
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         Crawler = database.getCollection("Crawler");
     }
-    @CrossOrigin("localhost:4200/")
+    @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/find/{s}")
-    public Document find(@PathVariable int s){
+    public List<Document> find(@PathVariable int s){
         Document query = new Document().append("crawled",s);
-        return Crawler.find(query).first();
+        MongoCursor<Document> cursor = Crawler.find(query).cursor();
+        List<Document> docs = new ArrayList<>();
+        try {
+            while(cursor.hasNext()) {
+                docs.add(cursor.next());
+                System.out.println(docs);
+            }
+        } finally {
+            cursor.close();
+            return docs;
+        }
+    }
+    @CrossOrigin("http://localhost:4200")
+    @GetMapping("/api/GoFind/{s}")
+    public List<Document> test(@PathVariable String s){
+        List<Document> docs = new ArrayList<>();
+        for (int i = 0; i < 20 ; i++) {
+            docs.add(new Document().append("url","https://stackoverflow.com/").append("p","FindOneAndUpdate takes three parameters. Pass the first parameter as filter and third parameter is FindOneAndUpdateOptions which takes the sort."));
+        }
+        return docs;
     }
     public static void main(String[] args) {
 //        new SearchEngineBackendApplication();
