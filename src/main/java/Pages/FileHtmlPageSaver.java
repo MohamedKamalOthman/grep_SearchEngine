@@ -1,5 +1,6 @@
 package Pages;
 
+import Crawler.DocumentWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.nodes.Document;
 import Database.IdbManager;
@@ -16,10 +17,9 @@ public class FileHtmlPageSaver implements IHtmlPageSaver {
     }
 
     @Override
-    public void save(Document doc, @NotNull String Url) {
+    public void save(DocumentWrapper WDoc, @NotNull String Url) {
         //Add to database URL mapping to files
-        int hash = Url.hashCode();
-        File HtmlDoc = new File(PathName + hash + ".html");
+        File HtmlDoc = new File(PathName + WDoc.crc + ".html");
 
         try {
             if (!HtmlDoc.createNewFile())
@@ -30,10 +30,10 @@ public class FileHtmlPageSaver implements IHtmlPageSaver {
 
         try {
             FileWriter myWriter = new FileWriter(HtmlDoc);
-            myWriter.write(doc.html());
+            myWriter.write(WDoc.html);
             myWriter.close();
             System.out.println("Successfully wrote to the file.");
-            Manager.savePage(Url,hash,false);
+            Manager.savePage(Url,WDoc.crc,false);
             System.out.println("Successfully wrote to Collection.");
         } catch (IOException e) {
             System.out.println("An error occurred.");

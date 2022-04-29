@@ -4,16 +4,29 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
 import Database.IdbManager;
 import Database.dbManager;
 import Pages.FileHtmlPageSaver;
 import Pages.FileUrlListHandler;
 import com.panforge.robotstxt.RobotsTxt;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.safety.Safelist;
+import org.jsoup.safety.Whitelist;
 
 public class CrawlerTest {
+    public static HashSet<String> set = new HashSet<>();
     public static void main(String[] args) throws IOException {
         IdbManager Manager = new dbManager();
 //        InputStream robotsTxtStream = new URL("https://github.com/robots.txt").openStream();
@@ -38,6 +51,6 @@ public class CrawlerTest {
                 e.printStackTrace();
             }
         }
-
     }
 }
+

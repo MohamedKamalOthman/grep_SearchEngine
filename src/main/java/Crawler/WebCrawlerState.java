@@ -37,7 +37,7 @@ public class WebCrawlerState {
         return ID;
     }
 
-    public void saveDocument(Document Doc, String Url) {
+    public void saveDocument(DocumentWrapper Doc, String Url) {
         HtmlPageSaver.save(Doc, Url);
         UrlListHandler.add(Url);
     }
@@ -63,10 +63,12 @@ public class WebCrawlerState {
     public void urlCrawled(String url){
         Manager.updateUrl(url,2);
     }
-    public void saveUrl(String url){
-        Manager.saveUrl(url,0);
+    public boolean saveUrl(String url){
+        return Manager.saveUrl(url,0);
     }
     public boolean urlExists(String url){
         return Manager.searchUrl(url);
     }
+    public boolean docExists(long docHash) {return Manager.docExists(docHash);}
+    public void incrementHost(String host) {Manager.incrementHost(host);}
 }

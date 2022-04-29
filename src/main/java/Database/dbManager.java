@@ -21,6 +21,7 @@ public class dbManager implements IdbManager {
     protected MongoCollection<Document> PageSaver;
     protected MongoCollection<Document> Crawler;
     protected MongoCollection<Document> indexerTest;
+    protected MongoCollection<Document> Popularity;
 
 
     public dbManager(){
@@ -29,13 +30,14 @@ public class dbManager implements IdbManager {
         PageSaver = database.getCollection("PageSaver");
         Crawler = database.getCollection("Crawler");
         indexerTest = database.getCollection("indexer test");
+        Popularity = database.getCollection("Popularity");
     }
 
     //region Crawler Methods
-    public boolean savePage(String url,int hash,boolean indexed){
+    public boolean savePage(String url,long docHash,boolean indexed){
         Document document = new Document();
         document.append("url", url);
-        document.append("hash", hash);
+        document.append("hash", docHash);
         document.append("indexed", indexed);
         PageSaver.insertOne(document);
         return true;
@@ -55,7 +57,7 @@ public class dbManager implements IdbManager {
         UpdateOptions options = new UpdateOptions().upsert(true);
         try {
             UpdateResult result = Crawler.updateOne(query, updates, options);
-            return true;
+            return result.getUpsertedId() != null;
         } catch (MongoException me) {
             System.err.println("Unable to update due to an error: " + me);
             return false;
@@ -109,6 +111,29 @@ public class dbManager implements IdbManager {
         Document query = Document.parse(json);
         return PageSaver.find(query).limit(1).first();
     }
+
+    public boolean docExists(long docHash) {
+        Document where = new Document().append("hash", docHash);
+        return PageSaver.countDocuments(where) > 0;
+    }
+
+    public boolean incrementHost(String host) {
+        Document query = new Document().append("host",  host);
+        Bson updates = Updates.combine(
+                Updates.inc("refCount", 1)
+                );
+        UpdateOptions options = new UpdateOptions().upsert(true);
+        try {
+            UpdateResult result = Popularity.updateOne(query, updates, options);
+            System.out.println("Modified document count: " + result.getModifiedCount());
+            System.out.println("Upserted id: " + result.getUpsertedId()); // only contains a value when an upsert is performed
+            return true;
+        } catch (MongoException me) {
+            System.err.println("Unable to update due to an error: " + me);
+            return false;
+        }
+    }
+
     public void insertOccurrence(String url,String value,String text_type,long location,int hash){
         Document query = new Document().append("value",  value);
 //        query.append("occurrences.url",url);
