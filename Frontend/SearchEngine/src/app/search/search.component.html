@@ -1,5 +1,5 @@
-<form action="" class="search-bar" >
-	<input type="search" name="search" pattern=".*\S.*" required>
+<form action="" class="search-bar" [formGroup]="Form" (ngSubmit)="search()">
+	<input id="q" name="q" formControlName="q" type="search" pattern=".*\S.*" required>
 	<button class="search-btn" type="submit">
 		<span>Search</span>
 	</button>

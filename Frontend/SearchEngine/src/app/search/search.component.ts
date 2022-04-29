@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
+import { FormBuilder, Validators } from '@angular/forms';
+
 @Component({
   selector: 'app-search',
   templateUrl: './search.component.html',
@@ -7,13 +9,18 @@ import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 })
 export class SearchComponent implements OnInit {
 
-  constructor(private route: Router) { 
+  constructor(private route: Router,private fb : FormBuilder) {}
+  get q () { return this.Form.get('q');}
 
-  }
-  q:any;
+  Form = this.fb.group(
+    {
+      q : ['',[ Validators.required]]
+    }
+  );
   ngOnInit(): void {
   }
   search():void{
-    this.route.navigate(['/result',{q:this.q}]);
+    console.log(this.q);
+    this.route.navigate(['/result',{q : this.q?.value }]);
   }
 }

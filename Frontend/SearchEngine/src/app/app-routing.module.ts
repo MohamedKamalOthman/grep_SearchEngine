@@ -5,11 +5,11 @@ import { SearchComponent } from './search/search.component';
 
 const routes: Routes = [
   {
-    path: '/search',
+    path: 'search',
     component: SearchComponent,
   },
   {
-    path: '/result',
+    path: 'result',
     component: ResultsComponent,
   },
   {

@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { ResultsComponent } from './results/results.component';
 import { HttpClientModule } from '@angular/common/http';
 import { SearchComponent } from './search/search.component'
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -16,7 +17,9 @@ import { SearchComponent } from './search/search.component'
   imports: [
     BrowserModule,
     AppRoutingModule,
-    HttpClientModule
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]
