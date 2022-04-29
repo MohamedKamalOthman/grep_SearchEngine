@@ -145,16 +145,17 @@ public class dbManager implements IdbManager {
         Document query = new Document().append("value", value);
 //        query.append("occurrences.url",url);
 //        Updates.
+        Document place = new Document().append("location",location).append("text_type",text_type).append("exactWord",exactWord).append("paragraph",paragraph);
+//        Document.parse("{\"location\":" + location + ",\"text_type\":\"" + text_type + "\",\"exactWord\":\"" + exactWord + "\",\"paragraph\":\"" + paragraph + "\"}")
         Bson updates = Updates.combine(
 //                Updates.setOnInsert();
 //                Updates.setOnInsert("value",  value),
 //                Updates.set("occurrences.$.url", url),
                 Updates.set("occurrences." + hash + ".url", url),
-                Updates.addToSet("occurrences." + hash + ".places", Document.parse("{\"location\":" + location + ",\"text_type\":\"" + text_type + "\",\"exactWord\":\"" + exactWord + "\",\"paragraph\":\"" + paragraph + "\"}")),
+                Updates.addToSet("occurrences." + hash + ".places", place),
                 Updates.inc("occurrences." + hash + ".total_count." + text_type, 1)
         );
         UpdateOptions options = new UpdateOptions().upsert(true);
-
         indexerBulkWrite.add(new UpdateOneModel(query, updates, options));
     }
 

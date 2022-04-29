@@ -53,7 +53,7 @@ public class PageIndexer {
         PathName = pathName;
     }
 
-    public List<String> stem(String term) throws Exception {
+    public static List<String> stem(String term) throws Exception {
         Analyzer analyzer = new StandardAnalyzer();
         TokenStream result = analyzer.tokenStream(null, term);
         result = new PorterStemFilter(result);
@@ -122,9 +122,9 @@ public class PageIndexer {
 //        }
 //        for (String word : test)
 //            System.out.println(word);
-        String Url = "https://stackoverflow.com/";
+        String Url = "https://en.wikiversity.org/wiki/Assistant_teacher_course";
         org.jsoup.nodes.Document doc = PageIndexer.request(Url);
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             count = 0;
             pageIndexer.htmlparser(doc);
             Manager.bulkWriteIndexer();
@@ -132,21 +132,25 @@ public class PageIndexer {
     }
 
     private static void htmlparser(Node element) {
-        for (Node n : element.childNodes()) {
+        try {
+            for (Node n : element.childNodes()) {
             if (n instanceof TextNode tNode && !tNode.isBlank()) {
                 var split = tNode.text().split("\\s+");
                 for (var exactWord : split) {
-                    var stemmed = stemWord(exactWord);
-                    if (stemmed == null)
-                        continue;
+                    var stemmed = stem(exactWord);
                     count++;
-                    Manager.insertOccurrence("https://stackoverflow.com/", stemmed, "header", count, 256, exactWord, tNode.text());
+                    if (stemmed.isEmpty() || exactWord.isBlank())
+                        continue;
+                    Manager.insertOccurrence("https://stackoverflow.com/", stemmed.get(0), "header", count, 256, exactWord, tNode.text());
                 }
             } else {
                 htmlparser(n);
             }
         }
-    }
+        }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
 
     private static org.jsoup.nodes.Document request(String Url) {
         try {
