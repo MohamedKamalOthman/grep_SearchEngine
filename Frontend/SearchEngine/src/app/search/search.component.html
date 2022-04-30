@@ -1,11 +1,19 @@
-<div class="container-fluid mt-5 pt-5">
-  <h1 class="text-center text-white">GoFind</h1>
-  <form action="" class="search-bar" [formGroup]="Form" (ngSubmit)="search()">
-    <input id="q" name="q" formControlName="q" matInput [formControl]="myControl" type="search"
-      pattern=".*\S.*" required>
-
-    <button class="search-btn" type="submit">
-      <span>Search</span>
-    </button>
-  </form>
+<div>
+    <div class=" container d-flex justify-content-center mt-5">
+        <img src="assets/img/google_PNG19644.png" class="img-fluid w-50">
+    </div>
+    <form class="container d-flex justify-content-center mt-5"  [formGroup]="Form" (ngSubmit)="search()">
+        <div class="input-group col-sm-7 input-group-lg">
+            <div class="input-group-prepend"> <span class="input-group-text google"><img
+                        src="https://img.icons8.com/color/48/000000/google-logo.png"></span> </div> <input id="q" name="q" type="text"
+                class="form-control" [formControl]="q" [matAutocomplete]="auto">
+            <mat-autocomplete #auto="matAutocomplete">
+                <mat-option *ngFor="let option of filteredOptions | async | slice : 0 : 5" [value]="option" >
+                    {{option}}
+                </mat-option>
+            </mat-autocomplete>
+            <div class="input-group-append"> <span class="input-group-text microphone"><img
+                        src="https://img.icons8.com/nolan/48/000000/microphone.png"></span> </div>
+        </div>
+    </form>
 </div>

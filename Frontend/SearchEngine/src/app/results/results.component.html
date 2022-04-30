@@ -1,36 +1,49 @@
 <div class="container-fluid">
-    <h1 class="text-center"><a href="#" class="text-decoration-none text-white">GoFind</a></h1>
-    <form action="" class="search-bar" [formGroup]="Form" (ngSubmit)="search()">
-        <input id="q" name="q" formControlName="q" type="search" pattern=".*\S.*" required>
-        <button class="search-btn" type="submit">
-            <span>Search</span>
-        </button>
-    </form>
-    <div class="text-white mt-3 col-sm-6 pl-5 ml-5 "
+    <div class="row mx-auto d-flex align-items-center">
+        <div class="mt-5 col-sm-3 offset-sm-1 ">
+            <img src="assets/img/google_PNG19644.png" class="float-start" width="300" height="auto">
+        </div>
+        <div class="col-sm-6 ">
+            <form class="mt-5 flex-fill " [formGroup]="Form" (ngSubmit)="search()">
+                <div class="input-group col-sm-7 input-group-lg">
+                    <div class="input-group-prepend"> <span class="input-group-text google"><img
+                                src="https://img.icons8.com/color/48/000000/google-logo.png"></span> </div> <input
+                        id="q" name="q" type="text" class="form-control" [formControl]="q" [matAutocomplete]="auto">
+                    <mat-autocomplete #auto="matAutocomplete">
+                        <mat-option *ngFor="let option of filteredOptions | async | slice : 0 : 5" [value]="option">
+                            {{option}}
+                        </mat-option>
+                    </mat-autocomplete>
+                    <div class="input-group-append"> <span class="input-group-text microphone"><img src="assets/img/icons8-microphone-48 (1).png"></span> </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="text-white mt-3 col-sm-6 ps-5 ms-5 "
         *ngFor="let result of results | slice: (page-1) * pageSize : page * pageSize; let i = index">
         <h2><a href="{{result.url}}">{{result.title}}</a>
         </h2>
         <a href="{{result.url}}">{{result.url}}</a>
-        <p [innerHTML]="highlight(i+(page-1)*pageSize)" class="font-weight-light"></p>
+        <p [innerHTML]="highlight(i+(page-1)*pageSize)" class="fw-light"></p>
     </div>
     <div class="text-white text-center mt-5 mb-5 ">
-        <h1 class="d-inline  mr-3" style="cursor: pointer;">
+        <h2 class="d-inline  me-3" style="cursor: pointer;">
             <a (click)="prevPage()" *ngIf="page > 1">
                 <fa-icon [icon]="faCaretLeft"></fa-icon>
             </a>
-        </h1>
-        <h1 class="d-inline ">
+        </h2>
+        <h2 class="d-inline">
             <a *ngFor="let i of pageNumbers | slice: backBuffer : nextBuffer" (click)="setPage(i+1)"
                 style="cursor: pointer;">
-                <span class="mr-3" *ngIf="i+1 != page">{{i+1}}</span>
-                <span class="mr-3 text-primary" *ngIf="i+1 == page">{{i+1}}</span>
+                <span class="me-3" *ngIf="i+1 != page">{{i+1}}</span>
+                <span class="me-3 text-primary" *ngIf="i+1 == page">{{i+1}}</span>
             </a>
-        </h1>
-        <h1 class="d-inline">
+        </h2>
+        <h2 class="d-inline">
             <a (click)="nextPage()" *ngIf="page < pages" style="cursor: pointer;">
                 <fa-icon [icon]="faCaretRight"></fa-icon>
             </a>
-        </h1>
+        </h2>
 
     </div>
 </div>

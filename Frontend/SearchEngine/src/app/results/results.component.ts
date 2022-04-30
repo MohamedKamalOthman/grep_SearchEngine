@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
-import { faCaretRight, faCaretLeft } from '@fortawesome/free-solid-svg-icons';
-import { FormBuilder, Validators } from '@angular/forms';
+import {
+  faCaretRight,
+  faCaretLeft,
+  faMicrophone,
+} from '@fortawesome/free-solid-svg-icons';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import { map, Observable, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-results',
@@ -27,21 +32,32 @@ export class ResultsComponent implements OnInit {
   pageNumbers!: number[];
   nextBuffer = 10;
   backBuffer = 0;
-  query!:string | null;;
+  query!: string | null;
   //search bar
-  get q() {
-    return this.Form.get('q');
-  }
-
   Form = this.fb.group({
     q: ['', [Validators.required]],
   });
+  q = new FormControl();
+  //this will be loaded from data base
+  options: string[] = [
+    'Champs-Élysées',
+    'Lombard Street',
+    'Abbey Road',
+    'Fifth Avenue',
+    'Champs-Élysées',
+    'Lombard Street',
+    'Abbey Road',
+    'Fifth Avenue',
+  ];
+  filteredOptions!: Observable<string[]>;
+  //Functions
+
   search(): void {
     console.log(this.q);
     if (!this.q?.value.trim()) return;
     this.router.routeReuseStrategy.shouldReuseRoute = () => false;
     this.router.onSameUrlNavigation = 'reload';
-    this.router.navigate(['/result', { q: this.q?.value }]);
+    this.router.navigate(['/result', { q: this.q.value }]);
   }
   ngOnInit(): void {
     const routeParams = this.route.snapshot.paramMap;
@@ -57,6 +73,10 @@ export class ResultsComponent implements OnInit {
       this.pageNumbers = Array.from(Array(this.pages).keys());
       console.log(this.results);
     });
+    this.filteredOptions = this.q.valueChanges.pipe(
+      startWith(''),
+      map((value) => this._filter(value))
+    );
   }
   nextPage() {
     if (this.pages < this.page) return;
@@ -93,7 +113,7 @@ export class ResultsComponent implements OnInit {
       console.log(words);
       for (let index = 0; index < words!.length; index++) {
         this.results[i].p = this.results[i].p.replace(
-          new RegExp(words![index],"gi"),
+          new RegExp(words![index], 'gi'),
           (match: string) => {
             return '<b>' + match + '</b>';
           }
@@ -101,5 +121,16 @@ export class ResultsComponent implements OnInit {
       }
       return this.results[i].p;
     }
+  }
+
+  private _filter(value: string): string[] {
+    const filterValue = this._normalizeValue(value);
+    return this.options.filter((option) =>
+      this._normalizeValue(option).includes(filterValue)
+    );
+  }
+
+  private _normalizeValue(value: string): string {
+    return value.toLowerCase().replace(/\s/g, '');
   }
 }

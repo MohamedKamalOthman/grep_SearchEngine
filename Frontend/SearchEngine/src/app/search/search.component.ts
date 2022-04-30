@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRoute, ParamMap } from '@angular/router';
+import { Router } from '@angular/router';
 import { FormBuilder, Validators, FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
@@ -10,21 +10,13 @@ import { map, startWith } from 'rxjs/operators';
 })
 export class SearchComponent implements OnInit {
   constructor(private route: Router, private fb: FormBuilder) {}
-  
-  myControl = new FormControl();
-  options: string[] = ['One', 'Two', 'Three'];
-  filteredOptions!: Observable<string[]>;
-
-  get q() {
-    return this.Form.get('q');
-  }
 
   Form = this.fb.group({
-    q: ['', [Validators.required]],
+    control: ['', [Validators.required]],
   });
 
   ngOnInit(): void {
-    this.filteredOptions = this.myControl.valueChanges.pipe(
+    this.filteredOptions = this.q.valueChanges.pipe(
       startWith(''),
       map((value) => this._filter(value))
     );
@@ -32,12 +24,31 @@ export class SearchComponent implements OnInit {
 
   search(): void {
     console.log(this.q);
-    if (!this.q?.value.trim()) return;
-    this.route.navigate(['/result', { q: this.q?.value }]);
+    if (!this.q.value.trim()) return;
+    this.route.navigate(['/result', { q: this.q.value }]);
   }
-  private _filter(value: string): string[] {
-    const filterValue = value.toLowerCase();
+  q = new FormControl();
+  //this will be loaded from data base
+  options: string[] = [
+    'Champs-Élysées',
+    'Lombard Street',
+    'Abbey Road',
+    'Fifth Avenue',
+    'Champs-Élysées',
+    'Lombard Street',
+    'Abbey Road',
+    'Fifth Avenue',
+  ];
+  filteredOptions!: Observable<string[]>;
 
-    return this.options.filter(option => option.toLowerCase().includes(filterValue));
+  private _filter(value: string): string[] {
+    const filterValue = this._normalizeValue(value);
+    return this.options.filter((option) =>
+      this._normalizeValue(option).includes(filterValue)
+    );
+  }
+
+  private _normalizeValue(value: string): string {
+    return value.toLowerCase().replace(/\s/g, '');
   }
 }

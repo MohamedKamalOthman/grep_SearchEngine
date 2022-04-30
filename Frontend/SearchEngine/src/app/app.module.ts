@@ -3,28 +3,28 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { ResultsComponent } from './results/results.component';
-import { HttpClientModule } from '@angular/common/http';
 import { SearchComponent } from './search/search.component';
+import { ResultsComponent } from './results/results.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientModule } from '@angular/common/http';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatFormFieldModule } from '@angular/material/form-field';
 @NgModule({
-  declarations: [AppComponent, ResultsComponent, SearchComponent],
+  declarations: [AppComponent, SearchComponent, ResultsComponent],
   imports: [
     BrowserModule,
     AppRoutingModule,
-    HttpClientModule,
+    FontAwesomeModule,
+    NgbModule,
     FormsModule,
     ReactiveFormsModule,
-    NgbModule,
-    FontAwesomeModule,
+    HttpClientModule,
     MatAutocompleteModule,
     BrowserAnimationsModule,
-    MatFormFieldModule,
+    MatFormFieldModule
   ],
   providers: [],
   bootstrap: [AppComponent],

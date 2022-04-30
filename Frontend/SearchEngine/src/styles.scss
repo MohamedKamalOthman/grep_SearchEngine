@@ -1,12 +1,10 @@
-/* Importing Bootstrap CSS file. */
-@import "~bootstrap/dist/css/bootstrap.css";
-body {
-  background: #171717;
-}
-.curser{
-  cursor: pointer;
-}
+/* You can add global styles to this file, and also import other style files */
 
+/* Importing Bootstrap SCSS file. */
+@import '~bootstrap/scss/bootstrap';
+body {
+    background: #202124;
+  }
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
