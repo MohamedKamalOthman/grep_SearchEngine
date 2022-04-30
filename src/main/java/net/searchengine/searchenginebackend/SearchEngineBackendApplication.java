@@ -53,8 +53,8 @@ public class SearchEngineBackendApplication {
     @GetMapping("/api/GoFind/{s}")
     public List<Document> test(@PathVariable String s) {
         List<Document> docs = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            docs.add(new Document().append("url", "https://stackoverflow.com/").append("p", "FindOneAndUpdate takes three parameters. Pass the first parameter as filter and third parameter is FindOneAndUpdateOptions which takes the sort."));
+        for (int i = 0; i < 200; i++) {
+            docs.add(new Document().append("title","StackOverFlow-title").append("url", "https://stackoverflow.com/"+i).append("p", "FindOneAndUpdate takes three parameters. Pass the first parameter as filter and third parameter is FindOneAndUpdateOptions which takes the sort."));
         }
         return docs;
     }

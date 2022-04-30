@@ -1,6 +1,11 @@
-<form action="" class="search-bar" [formGroup]="Form" (ngSubmit)="search()">
-  <input id="q" name="q" formControlName="q" type="search" pattern=".*\S.*" required>
-  <button class="search-btn" type="submit">
-    <span>Search</span>
-  </button>
-</form>
+<div class="container-fluid mt-5 pt-5">
+  <h1 class="text-center text-white">GoFind</h1>
+  <form action="" class="search-bar" [formGroup]="Form" (ngSubmit)="search()">
+    <input id="q" name="q" formControlName="q" matInput [formControl]="myControl" type="search"
+      pattern=".*\S.*" required>
+
+    <button class="search-btn" type="submit">
+      <span>Search</span>
+    </button>
+  </form>
+</div>
