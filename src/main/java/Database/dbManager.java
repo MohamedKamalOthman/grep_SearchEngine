@@ -16,6 +16,7 @@ import org.bson.types.ObjectId;
 
 import javax.print.Doc;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -114,7 +115,6 @@ public class dbManager implements IdbManager {
         return finishedCrawling;
     }
 
-
     public boolean searchUrl(String url) {
         Document query = new Document().append("url", url);
         long count = Crawler.countDocuments(query);
@@ -153,6 +153,28 @@ public class dbManager implements IdbManager {
             return false;
         }
     }
+
+    public boolean updateUrls(ArrayList<String> urls,int status) {
+        List UpdateBulkWrite = new ArrayList();
+        for(String url : urls){
+            Document query = new Document().append("url", url);
+            Bson updates = Updates.combine(
+                    Updates.set("crawled", status)
+            );
+            UpdateOptions options = new UpdateOptions().upsert(false);
+            UpdateBulkWrite.add(new UpdateOneModel(query,updates,options));
+        }
+        try {
+            var result = Crawler.bulkWrite(UpdateBulkWrite);
+            System.out.println("Modified document count: " + result.getModifiedCount());
+            //System.out.println("Upserted id: " + result.getUpsertedId()); // only contains a value when an upsert is performed
+            return true;
+        } catch (MongoException me) {
+            System.err.println("Unable to update due to an error: " + me);
+            return false;
+        }
+    }
+
     //endregion
 
     public Document getUrlForIndexing() {
@@ -163,6 +185,23 @@ public class dbManager implements IdbManager {
                 """;
         Document query = Document.parse(json);
         return PageSaver.find(query).limit(1).first();
+    }
+
+    public boolean updateIndexStatus(long hash, boolean status) {
+        Document query = new Document().append("hash", hash);
+        Bson updates = Updates.combine(
+                Updates.set("indexed", status)
+        );
+        UpdateOptions options = new UpdateOptions().upsert(false);
+        try {
+            UpdateResult result = PageSaver.updateOne(query, updates, options);
+            //System.out.println("Modified document count: " + result.getModifiedCount());
+            //System.out.println("Upserted id: " + result.getUpsertedId()); // only contains a value when an upsert is performed
+            return result.getModifiedCount() != 0;
+        } catch (MongoException me) {
+            System.err.println("Unable to update due to an error: " + me);
+            return false;
+        }
     }
 
     public boolean docExists(long docHash) {
@@ -187,12 +226,12 @@ public class dbManager implements IdbManager {
         }
     }
 
-    public boolean incrementHosts(ArrayList<String> hosts) {
+    public boolean incrementHosts(HashMap<String, Integer> hosts) {
         List popularityBulkWrtie = new ArrayList();
-        for (String host: hosts) {
+        for (String host: hosts.keySet()) {
             Document query = new Document().append("host", host);
             Bson updates = Updates.combine(
-                    Updates.inc("refCount", 1)
+                    Updates.inc("refCount", hosts.get(host))
             );
             UpdateOptions options = new UpdateOptions().upsert(true);
             popularityBulkWrtie.add(new UpdateOneModel(query,updates,options));

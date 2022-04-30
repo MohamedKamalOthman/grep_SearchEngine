@@ -5,10 +5,12 @@ import Pages.IHtmlPageSaver;
 import Pages.IUrlListHandler;
 import com.panforge.robotstxt.RobotsTxt;
 import org.jsoup.nodes.Document;
+import org.springframework.objenesis.instantiator.basic.FailingInstantiator;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -19,6 +21,8 @@ public class WebCrawlerState {
     private final IHtmlPageSaver HtmlPageSaver;
     private static final ConcurrentHashMap<String, RobotsTxt> RobotsTxtsMap = new ConcurrentHashMap<>();
     private IdbManager Manager;
+
+    private ArrayList<String> FinishedCrawlingUrls = new ArrayList<>();
 
     public static boolean finished = false;
 
@@ -69,7 +73,11 @@ public class WebCrawlerState {
     }
 
     public void urlCrawled(String url) {
-        Manager.updateUrl(url, 2);
+        FinishedCrawlingUrls.add(url);
+        if (FinishedCrawlingUrls.size() >= 100)
+        {
+            Manager.updateUrls(FinishedCrawlingUrls, 2);
+        }
     }
 
     public boolean saveUrl(String url) {
@@ -79,6 +87,10 @@ public class WebCrawlerState {
     public boolean saveUrls(ArrayList<String> urls) {
         boolean result =  Manager.saveUrls(urls);
         finished = Manager.isFinishedCrawling();
+        if (FinishedCrawlingUrls.isEmpty() == false && finished == true)
+        {
+            Manager.updateUrls(FinishedCrawlingUrls, 2);
+        }
         return result;
     }
 
@@ -94,7 +106,7 @@ public class WebCrawlerState {
         Manager.incrementHost(host);
     }
 
-    public void incrementHosts(ArrayList<String> hosts) {
+    public void incrementHosts(HashMap<String, Integer> hosts) {
         Manager.incrementHosts(hosts);
     }
 }
