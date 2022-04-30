@@ -102,6 +102,7 @@ public class PageIndexer {
             count = 0;
             htmlparser(html);
             Manager.bulkWriteIndexer();
+            Manager.updateIndexStatus(hash,true);
         } catch (IOException e) {
             e.printStackTrace();
         }

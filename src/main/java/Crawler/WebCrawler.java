@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 
@@ -44,7 +45,7 @@ public class WebCrawler implements Runnable {
             // TODO Bulk Insert All Links
             if(State.isFinished() == false){
                 ArrayList<String> urls = new ArrayList<>();
-                ArrayList<String> hosts = new ArrayList<>();
+                HashMap<String, Integer> hosts = new HashMap<>();
                 for (Element link : doc.select("a[href]")) {
                     URL NextLink;
                     try {
@@ -58,7 +59,7 @@ public class WebCrawler implements Runnable {
                     if (State.isAllowedByRobotsTxt(NextLink.getProtocol() + "://" + NextHost, NextUrl)) {
                         urls.add(NextUrl);
                         if (!Objects.equals(host, NextHost))
-                            hosts.add(NextHost);
+                            hosts.put(NextHost, hosts.getOrDefault(NextHost, 0) + 1);
                     }
                 }
                 State.saveUrls(urls);
