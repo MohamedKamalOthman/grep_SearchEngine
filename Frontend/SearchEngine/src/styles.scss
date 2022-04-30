@@ -1,7 +1,12 @@
-/* Importing Bootstrap SCSS file. */
-@import '~bootstrap/scss/bootstrap';
+/* Importing Bootstrap CSS file. */
+@import "~bootstrap/dist/css/bootstrap.css";
 body {
   background: #171717;
 }
+.curser{
+  cursor: pointer;
+}
 
 
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
