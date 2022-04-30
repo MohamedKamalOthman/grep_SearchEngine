@@ -41,6 +41,8 @@ public class PageIndexer {
     private final String PathName;
     private static long currentHash = 0;
     private static long count = 0;
+    private static long length = 0;
+
     private static String currentUrl = "";
 
     static HashSet<String> stopWords = new HashSet<>(Arrays.asList(new String[]{
@@ -99,9 +101,11 @@ public class PageIndexer {
             org.jsoup.nodes.Document html = Jsoup.parse(file, null);
             currentUrl = url;
             currentHash = hash;
+            length = html.text().split("\\s+").length;
             count = 0;
             htmlparser(html);
             Manager.bulkWriteIndexer();
+
             Manager.updateIndexStatus(hash,true);
         } catch (IOException e) {
             e.printStackTrace();
@@ -110,15 +114,17 @@ public class PageIndexer {
 
     private static void htmlparser(Node element) {
         try {
+
             for (Node n : element.childNodes()) {
             if (n instanceof TextNode tNode && !tNode.isBlank()) {
                 var split = tNode.text().split("\\s+");
+
                 for (var exactWord : split) {
                     var stemmed = stem(exactWord);
                     count++;
                     if (stemmed.isEmpty() || exactWord.isBlank())
                         continue;
-                    Manager.insertOccurrence(currentUrl, stemmed.get(0), "body", count, currentHash, exactWord, tNode.text());
+                    Manager.insertOccurrence(currentUrl, stemmed.get(0), "body", count , length, currentHash, exactWord, tNode.text());
                 }
             } else {
                 htmlparser(n);

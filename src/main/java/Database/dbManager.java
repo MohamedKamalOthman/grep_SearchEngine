@@ -5,28 +5,25 @@ import com.mongodb.*;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.model.FindOneAndUpdateOptions;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.*;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import javax.print.Doc;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
+import static com.mongodb.client.model.Filters.empty;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Projections.include;
 
 public class dbManager implements IdbManager {
     protected MongoCollection<Document> PageSaver;
     protected MongoCollection<Document> Crawler;
     protected MongoCollection<Document> indexerTest;
     protected MongoCollection<Document> Popularity;
+    protected MongoCollection<Document> Testing;
     protected static List indexerBulkWrite = new ArrayList();
 
     public static boolean finishedCrawling = false;
@@ -38,6 +35,8 @@ public class dbManager implements IdbManager {
         Crawler = database.getCollection("Crawler");
         indexerTest = database.getCollection("indexer test");
         Popularity = database.getCollection("Popularity");
+        MongoDatabase database1 = mongoClient.getDatabase("test");
+        Testing = database1.getCollection("testing");
     }
 
     //region Crawler Methods
@@ -60,8 +59,7 @@ public class dbManager implements IdbManager {
          */
 
         long count = Crawler.countDocuments();
-        if(count >= 5100)
-        {
+        if (count >= 5100) {
             return false;
         }
         Document query = new Document().append("url", url);
@@ -81,14 +79,13 @@ public class dbManager implements IdbManager {
 
     public boolean saveUrls(ArrayList<String> urls) {
         long count = Crawler.countDocuments();
-        if(count >= 5100)
-        {
+        if (count >= 5100) {
             finishedCrawling = true;
             return false;
         }
         List crawlerBulkWrite = new ArrayList();
 
-        for (String url: urls) {
+        for (String url : urls) {
             Document query = new Document().append("url", url);
             Bson updates = Updates.combine(
                     Updates.setOnInsert("crawled", 0)
@@ -100,8 +97,7 @@ public class dbManager implements IdbManager {
         try {
             var result = Crawler.bulkWrite(crawlerBulkWrite);
             count = Crawler.countDocuments();
-            if(count >= 5100)
-            {
+            if (count >= 5100) {
                 finishedCrawling = true;
             }
             return result.getInsertedCount() != 0;
@@ -111,7 +107,7 @@ public class dbManager implements IdbManager {
         }
     }
 
-    public boolean isFinishedCrawling(){
+    public boolean isFinishedCrawling() {
         return finishedCrawling;
     }
 
@@ -154,15 +150,15 @@ public class dbManager implements IdbManager {
         }
     }
 
-    public boolean updateUrls(ArrayList<String> urls,int status) {
+    public boolean updateUrls(ArrayList<String> urls, int status) {
         List UpdateBulkWrite = new ArrayList();
-        for(String url : urls){
+        for (String url : urls) {
             Document query = new Document().append("url", url);
             Bson updates = Updates.combine(
                     Updates.set("crawled", status)
             );
             UpdateOptions options = new UpdateOptions().upsert(false);
-            UpdateBulkWrite.add(new UpdateOneModel(query,updates,options));
+            UpdateBulkWrite.add(new UpdateOneModel(query, updates, options));
         }
         try {
             var result = Crawler.bulkWrite(UpdateBulkWrite);
@@ -228,13 +224,13 @@ public class dbManager implements IdbManager {
 
     public boolean incrementHosts(HashMap<String, Integer> hosts) {
         List popularityBulkWrtie = new ArrayList();
-        for (String host: hosts.keySet()) {
+        for (String host : hosts.keySet()) {
             Document query = new Document().append("host", host);
             Bson updates = Updates.combine(
                     Updates.inc("refCount", hosts.get(host))
             );
             UpdateOptions options = new UpdateOptions().upsert(true);
-            popularityBulkWrtie.add(new UpdateOneModel(query,updates,options));
+            popularityBulkWrtie.add(new UpdateOneModel(query, updates, options));
         }
 
         try {
@@ -246,22 +242,67 @@ public class dbManager implements IdbManager {
         }
     }
 
-    public void insertOccurrence(String url, String value, String text_type, long location, long hash, String exactWord, String paragraph) {
+    public void insertOccurrence(String url, String value, String text_type, long location, long length, long hash, String exactWord, String paragraph) {
         Document query = new Document().append("value", value);
 //        query.append("occurrences.url",url);
 //        Updates.
-        Document place = new Document().append("location",location).append("text_type",text_type).append("exactWord",exactWord).append("paragraph",paragraph);
+        Document place = new Document().append("location", location).append("text_type", text_type).append("exactWord", exactWord).append("paragraph", paragraph);
 //        Document.parse("{\"location\":" + location + ",\"text_type\":\"" + text_type + "\",\"exactWord\":\"" + exactWord + "\",\"paragraph\":\"" + paragraph + "\"}")
         Bson updates = Updates.combine(
-//                Updates.setOnInsert();
-//                Updates.setOnInsert("value",  value),
-//                Updates.set("occurrences.$.url", url),
+//              Updates.setOnInsert();
+//              Updates.setOnInsert("value",  value),
+//              Updates.set("occurrences.$.url", url),
                 Updates.set("occurrences." + hash + ".url", url),
                 Updates.addToSet("occurrences." + hash + ".places", place),
-                Updates.inc("occurrences." + hash + ".total_count." + text_type, 1)
+                Updates.inc("occurrences." + hash + ".total_count." + text_type, 1),
+                Updates.inc("occurrences." + hash + ".term_frequency", 1),
+                Updates.set("occurrences." + hash + ".length", length)
         );
         UpdateOptions options = new UpdateOptions().upsert(true);
         indexerBulkWrite.add(new UpdateOneModel(query, updates, options));
+    }
+
+    public void insertOccurrenceTest(String url, String value, String text_type, long location, long hash, String exactWord, String paragraph) {
+
+        // First Stage
+        Document queryForWord = new Document().append("value", value);
+
+        Bson updateForNewWord = Updates.combine(
+                Updates.setOnInsert("occurrences", Arrays.asList())
+        );
+        UpdateOptions NewWordOptions = new UpdateOptions().upsert(true);
+
+        indexerBulkWrite.add(new UpdateOneModel(queryForWord, updateForNewWord, NewWordOptions));
+
+        // Second Stage
+        var count = indexerTest.countDocuments(new Document().append("value", value)
+                .append("occurrences.url", url));
+        System.out.println(count);
+        if (count == 0) {
+            Document queryForOccurrence = new Document().append("value", value);
+
+            Document emptyOccurrence = new Document().append("url", url);
+
+            Bson updateForEmptyOccurrence = Updates.combine(
+                    Updates.addToSet("occurrences", emptyOccurrence)
+            );
+
+            UpdateOptions EmptyOccurrenceOptions = new UpdateOptions().upsert(false);
+
+            indexerBulkWrite.add(new UpdateOneModel(queryForOccurrence, updateForEmptyOccurrence, EmptyOccurrenceOptions));
+        }
+
+        // Third Stage
+        Document queryForPlace = new Document().append("value", value).append("occurrences.url", url);
+
+        Document place = new Document().append("location", location).append("text_type", text_type).append("exactWord", exactWord).append("paragraph", paragraph);
+        Bson updates = Updates.combine(
+                Updates.addToSet("occurrences.$.places", place)
+        );
+        UpdateOptions options = new UpdateOptions().upsert(false);
+
+        indexerBulkWrite.add(new UpdateOneModel(queryForPlace, updates, options));
+
     }
 
     public void bulkWriteIndexer() {
@@ -273,9 +314,35 @@ public class dbManager implements IdbManager {
         indexerBulkWrite.clear();
     }
 
+    public void SetNormalizedTermFrequency() {
+        var result = indexerTest.aggregate(Arrays.asList(
+                Aggregates.match(Filters.empty()),
+                Aggregates.group("$value", Accumulators.sum("occurrences", 1))
+        ));
+        for (var doc : result) {
+            System.out.println(doc.toJson());
+        }
+    }
+
+    public void Test()
+    {
+        var result = indexerTest.find(eq("value","programmings")).first();
+        Document occurrences = (Document) result.get("occurrences");
+        for (String field : occurrences.keySet())
+        {
+            System.out.println(field + " " + occurrences.get(field));
+        }
+    }
+
+
     //for testing only!
     public static void main(String[] args) {
         dbManager d = new dbManager();
-//        d.insertOccurrence("https://www.stackoverflows.com","programmings","header",2576,-2561);
+//        d.insertOccurrence("https://www.stackoverflowss.com","programmings","header",1,-2561, "programming","paragraph");
+//        d.insertOccurrence("https://www.stackoverflow.com","programmings","header",5,-236, "programming","paragraph");
+//        d.insertOccurrence("https://www.stackoverflowe.com","programmings","header",78,-86, "programming","paragraph");
+//        d.bulkWriteIndexer();
+        //  d.SetNormalizedTermFrequency();
+        d.Test();
     }
 }

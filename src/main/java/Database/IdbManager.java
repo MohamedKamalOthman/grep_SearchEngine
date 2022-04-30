@@ -31,7 +31,7 @@ public interface IdbManager {
 
     public boolean incrementHosts(HashMap<String, Integer> hosts);
 
-    public void insertOccurrence(String url, String value, String text_type, long location, long hash, String exactWord, String paragraph);
+    public void insertOccurrence(String url, String value, String text_type, long location, long length, long hash, String exactWord, String paragraph);
 
     public void bulkWriteIndexer();
 }
