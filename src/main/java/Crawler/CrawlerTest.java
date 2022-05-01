@@ -2,29 +2,14 @@ package Crawler;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.zip.CRC32;
-import java.util.zip.Checksum;
 
 import Database.IdbManager;
 import Database.dbManager;
 import Indexer.PageIndexer;
 import Pages.FileHtmlPageSaver;
 import Pages.FileUrlListHandler;
-import com.panforge.robotstxt.RobotsTxt;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
-import org.jsoup.safety.Safelist;
-import org.jsoup.safety.Whitelist;
 
 public class CrawlerTest {
     public static HashSet<String> set = new HashSet<>();
@@ -35,7 +20,7 @@ public class CrawlerTest {
 //        RobotsTxt robotsTxt = RobotsTxt.read(robotsTxtStream);
 //        boolean hasAccess = robotsTxt.query(null,"https://github.com/humans.txt");
 //        System.out.println(hasAccess);
-
+        Manager.resetCrawledStatus();
         // Must Start With Adding Our Start Pages For The First Run Only
         String pathName = "." + File.separator + "Files" + File.separator;
         ArrayList<WebCrawler> crawlers = new ArrayList<>();

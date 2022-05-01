@@ -4,25 +4,21 @@ import Database.IdbManager;
 import Pages.IHtmlPageSaver;
 import Pages.IUrlListHandler;
 import com.panforge.robotstxt.RobotsTxt;
-import org.jsoup.nodes.Document;
-import org.springframework.objenesis.instantiator.basic.FailingInstantiator;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class WebCrawlerState {
     private final int ID;
     private final IUrlListHandler UrlListHandler;
     private final IHtmlPageSaver HtmlPageSaver;
     private static final ConcurrentHashMap<String, RobotsTxt> RobotsTxtsMap = new ConcurrentHashMap<>();
-    private IdbManager Manager;
+    private final IdbManager Manager;
 
-    private ArrayList<String> FinishedCrawlingUrls = new ArrayList<>();
+    private final ArrayList<String> FinishedCrawlingUrls = new ArrayList<>();
 
     public static boolean finished = false;
 
@@ -36,8 +32,6 @@ public class WebCrawlerState {
     public boolean isFinished(){
         return finished;
     }
-    //  crawlers status list-> who finished who continued
-    protected final static BlockingQueue<String> AllLinks = new LinkedBlockingQueue<>();
 
     public boolean isUrlVisited(String URL) {
         return UrlListHandler.contains(URL);
@@ -87,7 +81,7 @@ public class WebCrawlerState {
     public boolean saveUrls(ArrayList<String> urls) {
         boolean result =  Manager.saveUrls(urls);
         finished = Manager.isFinishedCrawling();
-        if (FinishedCrawlingUrls.isEmpty() == false && finished == true)
+        if (!FinishedCrawlingUrls.isEmpty() && finished)
         {
             Manager.updateUrls(FinishedCrawlingUrls, 2);
         }

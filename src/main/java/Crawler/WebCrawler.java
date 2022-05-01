@@ -1,7 +1,5 @@
 package Crawler;
 
-import Pages.IHtmlPageSaver;
-import org.apache.catalina.Manager;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -13,11 +11,9 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Objects;
 
 public class WebCrawler implements Runnable {
-    private final static int MAX_DEPTH = 3;
     private final String FirstLink;
     private final Thread Thread;
     private final WebCrawlerState State;
@@ -42,8 +38,7 @@ public class WebCrawler implements Runnable {
         }
         if (doc != null && !State.docExists(WDoc.crc)) {
             State.saveDocument(WDoc, Url);
-            // TODO Bulk Insert All Links
-            if(State.isFinished() == false){
+            if(!State.isFinished()){
                 ArrayList<String> urls = new ArrayList<>();
                 HashMap<String, Integer> hosts = new HashMap<>();
                 for (Element link : doc.select("a[href]")) {
@@ -58,7 +53,7 @@ public class WebCrawler implements Runnable {
                     String NextHost = NextLink.getHost();
                     if (State.isAllowedByRobotsTxt(NextLink.getProtocol() + "://" + NextHost, NextUrl)) {
                         urls.add(NextUrl);
-                        if (!Objects.equals(host, NextHost))
+                        if (host != null && host.equals(NextHost))
                             hosts.put(NextHost, hosts.getOrDefault(NextHost, 0) + 1);
                     }
                 }
@@ -68,7 +63,7 @@ public class WebCrawler implements Runnable {
         }
         State.urlCrawled(Url);
         String link = State.getNextUrl();
-        if (link != "")//null means no more links to crawl
+        if (!Objects.equals(link, ""))//null means no more links to crawl
             crawl(level + 1, link);
     }
 
