@@ -30,7 +30,8 @@ public class PageRanker {
             RankerResult result = new RankerResult();
             Document occurrence = (Document) occurrences.get(key);
             result.url = (String) occurrence.get("url");
-            double normalized_term_frequency = (double) ((int)occurrence.get("term_frequency")) / (double) ((long)occurrence.get("length"));
+            long totalLength = (long)occurrence.get("length");
+            double normalized_term_frequency = (double) ((int)occurrence.get("term_frequency")) / (double) totalLength;
             if(normalized_term_frequency > 0.5)
                 continue;
             int popularity = 1;
@@ -45,14 +46,18 @@ public class PageRanker {
 
             result.paragraphs = new ArrayList<>();
             result.topParagraphs = new ArrayList<>();
+            int count = 1;
             for(Document place : (ArrayList<Document>) occurrence.get("places")){
                 ParagraphData p = new ParagraphData();
                 p.exactWord = (String) place.get("exactWord");
                 p.location = (long) place.get("location");
                 p.paragraph = ((String) place.get("paragraph")).trim();
                 result.paragraphs.add(p);
-                if(((String) place.get("exactWord")).equals(word))
+                if(((String) place.get("exactWord")).equals(word)){
                     result.topParagraphs.add(p);
+                    count++;
+                }
+            result.rank *= 2 * (count / (double) totalLength);
             }
             Results.add(result);
         }
@@ -62,7 +67,7 @@ public class PageRanker {
     public static void main(String[] args) {
         dbManager db = new dbManager();
         PageRanker pageRanker = new PageRanker(db);
-        var result = pageRanker.GetSingleWordResults("latest");
+        var result = pageRanker.GetSingleWordResults("fox");
         result.sort(((o1, o2) -> {
             return o1.rank < o2.rank ? +1 : o1.rank > o2.rank ? -1 : 0;
         }));
