@@ -21,9 +21,14 @@ public interface IdbManager {
     public boolean saveUrls(ArrayList<String> urls);
 
     public Document getUrlForIndexing();
+
     public boolean updateIndexStatus(long hash, boolean status);
 
     public boolean docExists(long docHash);
+
+    public Document getWordDocument(String word);
+
+    public int getPopularity(String host);
 
     public boolean incrementHost(String host);
 

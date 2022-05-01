@@ -314,14 +314,16 @@ public class dbManager implements IdbManager {
         indexerBulkWrite.clear();
     }
 
-    public void SetNormalizedTermFrequency() {
-        var result = indexerTest.aggregate(Arrays.asList(
-                Aggregates.match(Filters.empty()),
-                Aggregates.group("$value", Accumulators.sum("occurrences", 1))
-        ));
-        for (var doc : result) {
-            System.out.println(doc.toJson());
-        }
+    public Document getWordDocument(String word){
+        var result =  indexerTest.find(new Document().append("value",word)).first();
+        return result;
+    }
+
+    public int getPopularity(String host){
+        var result = Popularity.find(new Document().append("host",host)).first();
+        if(result == null)
+            return 1;
+        return (int)result.get("refCount");
     }
 
     public void Test()

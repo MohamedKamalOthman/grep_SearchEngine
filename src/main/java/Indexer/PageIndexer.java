@@ -91,9 +91,11 @@ public class PageIndexer {
         return stem.getCurrent();
     }
 
-    public void StartIndexing() {
+    public boolean StartIndexing() {
         Document doc = Manager.getUrlForIndexing();
-        System.out.println(doc.toString());
+        if(doc == null)
+            return false;
+        //System.out.println(doc.toString());
         long hash = (long) doc.get("hash");
         String url = (String) doc.get("url");
         File file = new File(PathName + hash + ".html");
@@ -105,11 +107,13 @@ public class PageIndexer {
             count = 0;
             htmlparser(html);
             Manager.bulkWriteIndexer();
-
             Manager.updateIndexStatus(hash,true);
+            System.out.println("Finished Indexing "+ url);
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
+        return true;
     }
 
     private static void htmlparser(Node element) {
@@ -139,7 +143,7 @@ public class PageIndexer {
         dbManager db = new dbManager();
         System.out.println(stemWord("a"));
         PageIndexer pageIndexer = new PageIndexer("." + File.separator + "Files" + File.separator, db);
-//        pageIndexer.StartIndexing();
+        while(pageIndexer.StartIndexing());
 //        List<String> test = null;
 //        try {
 //            test = pageIndexer.stem("the a is opening of the difficult things in likewise the project");
