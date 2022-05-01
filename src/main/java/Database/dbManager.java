@@ -334,6 +334,21 @@ public class dbManager implements IdbManager {
         }
     }
 
+    public boolean resetCrawledStatus() {
+        Document query = new Document().append("crawled", 1);
+        Bson updates = Updates.combine(
+                Updates.set("crawled", 0)
+        );
+        UpdateOptions options = new UpdateOptions().upsert(false);
+        try {
+            UpdateResult result = Crawler.updateMany(query, updates, options);
+            System.out.println("Reset " + result.getModifiedCount() + " crawled status");
+            return true;
+        } catch (MongoException me) {
+            System.err.println("Unable to update due to an error: " + me);
+            return false;
+        }
+    }
 
     //for testing only!
     public static void main(String[] args) {

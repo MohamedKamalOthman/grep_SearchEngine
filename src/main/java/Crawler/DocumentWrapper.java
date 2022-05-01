@@ -4,7 +4,6 @@ package Crawler;
 import org.jsoup.nodes.Document;
 
 import java.util.zip.CRC32;
-import java.util.zip.Checksum;
 
 public class DocumentWrapper {
     public Document doc;
