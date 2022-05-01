@@ -1,27 +1,22 @@
 package Database;
 
-import Indexer.PageIndexer;
 import com.mongodb.*;
-import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.*;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 
-import javax.print.Doc;
 import java.util.*;
 
-import static com.mongodb.client.model.Filters.empty;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Projections.include;
 
 public class dbManager implements IdbManager {
     protected MongoCollection<Document> PageSaver;
     protected MongoCollection<Document> Crawler;
-    protected MongoCollection<Document> indexerTest;
+    protected MongoCollection<Document> SearchIndex;
     protected MongoCollection<Document> Popularity;
     protected MongoCollection<Document> Testing;
     protected static List indexerBulkWrite = new ArrayList();
@@ -33,7 +28,7 @@ public class dbManager implements IdbManager {
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         PageSaver = database.getCollection("PageSaver");
         Crawler = database.getCollection("Crawler");
-        indexerTest = database.getCollection("indexer test");
+        SearchIndex = database.getCollection("SearchIndex");
         Popularity = database.getCollection("Popularity");
         MongoDatabase database1 = mongoClient.getDatabase("test");
         Testing = database1.getCollection("testing");
@@ -275,7 +270,7 @@ public class dbManager implements IdbManager {
         indexerBulkWrite.add(new UpdateOneModel(queryForWord, updateForNewWord, NewWordOptions));
 
         // Second Stage
-        var count = indexerTest.countDocuments(new Document().append("value", value)
+        var count = SearchIndex.countDocuments(new Document().append("value", value)
                 .append("occurrences.url", url));
         System.out.println(count);
         if (count == 0) {
@@ -307,7 +302,7 @@ public class dbManager implements IdbManager {
 
     public void bulkWriteIndexer() {
         try {
-            indexerTest.bulkWrite(indexerBulkWrite);
+            SearchIndex.bulkWrite(indexerBulkWrite);
         } catch (MongoException me) {
             System.err.println("Unable to update due to an error: " + me);
         }
@@ -315,7 +310,7 @@ public class dbManager implements IdbManager {
     }
 
     public Document getWordDocument(String word){
-        var result =  indexerTest.find(new Document().append("value",word)).first();
+        var result =  SearchIndex.find(new Document().append("value",word)).first();
         return result;
     }
 
@@ -328,7 +323,7 @@ public class dbManager implements IdbManager {
 
     public void Test()
     {
-        var result = indexerTest.find(eq("value","programmings")).first();
+        var result = SearchIndex.find(eq("value","programmings")).first();
         Document occurrences = (Document) result.get("occurrences");
         for (String field : occurrences.keySet())
         {
