@@ -1,9 +1,13 @@
 package net.searchengine.searchenginebackend;
 
+import Database.IdbManager;
+import Database.dbManager;
+import Queries.QueryProcessor;
 import com.mongodb.client.*;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
+import org.apache.catalina.Manager;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.jsoup.nodes.Node;
@@ -28,12 +32,15 @@ import java.util.stream.Stream;
 public class SearchEngineBackendApplication {
     protected MongoCollection<Document> Crawler;
     protected MongoCollection<Document> Queries;
-
+    private IdbManager Manager;
+    private QueryProcessor processor;
     public SearchEngineBackendApplication() {
         MongoClient mongoClient = MongoClients.create("mongodb://admin:pass@mongo-dev.demosfortest.com:27017/");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         Crawler = database.getCollection("Crawler");
         Queries = database.getCollection("Queries");
+        Manager = new dbManager();
+        processor = new QueryProcessor(Manager);
     }
 
     @CrossOrigin("http://localhost:4200")
@@ -56,21 +63,20 @@ public class SearchEngineBackendApplication {
     @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/GoFind/{s}")
     public List<Document> test(@PathVariable String s) {
+        //TODO refactor this to dbManager
         Queries.updateOne(new Document(),Updates.addToSet("q",s.toLowerCase()),new UpdateOptions().upsert(true));
-        List<Document> docs = new ArrayList<>();
-        for (int i = 0; i < 200; i++) {
-            docs.add(new Document().append("title","StackOverFlow-title").append("url", "https://stackoverflow.com/"+i).append("p", "FindOneAndUpdate takes three parameters. Pass the first parameter as filter and third parameter is FindOneAndUpdateOptions which takes the sort."));
-        }
-        return docs;
+        return processor.rankQuery(s);
     }
     //hopefully no one finds this code
     @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/prevQueries")
     public List<String> prevQueries(){
+        //TODO refactor this to dbManager
         var l = (List<String>)Queries.find(new Document()).first().get("q");
         Collections.reverse(l);
         return  l;
     }
+
     public static void main(String[] args) {
         SpringApplication.run(SearchEngineBackendApplication.class, args);
     }

@@ -1,5 +1,7 @@
 package Ranker;
 
+import org.bson.Document;
+
 import java.util.ArrayList;
 
 public class RankerResult {
@@ -7,14 +9,14 @@ public class RankerResult {
     public ArrayList<ParagraphData> paragraphs;
     public ArrayList<ParagraphData> topParagraphs;
     public double rank;
-
+    public String title;
 
     @Override
     public String toString(){
         String result =  "URL = " + url + "\n" +
                 "With Rank = " + rank + "\n" +
                 "Top Paragraphs : \n";
-        for(var p : paragraphs)
+        for(var p : topParagraphs)
             result += p.location + "\n" + p.paragraph + "\n-------------------------------------- \n";
 
         result +="All Paragraphs : \n";
@@ -24,7 +26,11 @@ public class RankerResult {
 
         return result;
     }
+    public Document toJSON(){
+        Document doc = new Document().append("title",title).append("p",topParagraphs.get(0).paragraph).append("url",url);
 
+        return doc;
+    }
     @Override
     public int hashCode() {
         return url.hashCode();

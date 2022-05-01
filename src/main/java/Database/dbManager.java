@@ -237,7 +237,7 @@ public class dbManager implements IdbManager {
         }
     }
 
-    public void insertOccurrence(String url, String value, String text_type, long location, long length, long hash, String exactWord, String paragraph) {
+    public void insertOccurrence(String url, String value, String text_type, long location, long length, String title,long hash, String exactWord, String paragraph) {
         Document query = new Document().append("value", value);
 //        query.append("occurrences.url",url);
 //        Updates.
@@ -251,7 +251,8 @@ public class dbManager implements IdbManager {
                 Updates.addToSet("occurrences." + hash + ".places", place),
                 Updates.inc("occurrences." + hash + ".total_count." + text_type, 1),
                 Updates.inc("occurrences." + hash + ".term_frequency", 1),
-                Updates.set("occurrences." + hash + ".length", length)
+                Updates.set("occurrences." + hash + ".length", length),
+                Updates.set("occurrences." + hash + ".title", title)
         );
         UpdateOptions options = new UpdateOptions().upsert(true);
         indexerBulkWrite.add(new UpdateOneModel(query, updates, options));

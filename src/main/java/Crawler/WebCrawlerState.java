@@ -6,7 +6,9 @@ import Pages.IUrlListHandler;
 import com.panforge.robotstxt.RobotsTxt;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,6 +18,8 @@ public class WebCrawlerState {
     private final IUrlListHandler UrlListHandler;
     private final IHtmlPageSaver HtmlPageSaver;
     private static final ConcurrentHashMap<String, RobotsTxt> RobotsTxtsMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String,String> noRobotsTxtsSet = new ConcurrentHashMap<>();
+
     private final IdbManager Manager;
 
     private final ArrayList<String> FinishedCrawlingUrls = new ArrayList<>();
@@ -47,17 +51,24 @@ public class WebCrawlerState {
     }
 
     public boolean isAllowedByRobotsTxt(String HostUrl, String Url) {
+        //return true if host doesn't have robots.txt
+        if(noRobotsTxtsSet.contains(HostUrl))
+            return true;
         RobotsTxt RobotsTxtFile = RobotsTxtsMap.get(HostUrl);
+        //return the file if I already downloaded it
         if (RobotsTxtFile != null)
             return RobotsTxtFile.query(null, Url);
-
         try {
-            RobotsTxtFile = RobotsTxt.read(new URL(HostUrl + "/robots.txt").openStream());
+            URL url = new URL(HostUrl + "/robots.txt");
+            URLConnection urlConnection =  url.openConnection();
+            urlConnection.setConnectTimeout(1500);
+            InputStream inputStream = urlConnection.getInputStream();;
+            RobotsTxtFile = RobotsTxt.read(inputStream);
         } catch (IOException e) {
+            noRobotsTxtsSet.put(HostUrl,"");
             e.printStackTrace();
             return true;
         }
-
         RobotsTxtsMap.put(HostUrl, RobotsTxtFile);
         return RobotsTxtFile.query(null, Url);
     }

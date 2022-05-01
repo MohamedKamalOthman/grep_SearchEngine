@@ -5,22 +5,24 @@ import Database.dbManager;
 import Ranker.PageRanker;
 import Ranker.RankerResult;
 import com.sun.jdi.PathSearchingVirtualMachine;
+import org.bson.Document;
 import org.springframework.data.domain.Page;
 
 import javax.xml.transform.Result;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class QueryProcessor {
     private String[] Query;
     private final PageRanker ranker;
-    QueryProcessor(String Query, IdbManager Manager) {
+    public QueryProcessor(IdbManager Manager) {
         ranker = new PageRanker(Manager);
-        this.Query = Query.toLowerCase().split("\\s+");
     }
 
-    public void rankQuery() {
+    public List<Document> rankQuery(String query) {
+        Query = query.toLowerCase().split("\\s+");
         ArrayList<ArrayList<RankerResult>> results = new ArrayList<>();
         for(String word : Query) {
             var result = ranker.GetSingleWordResults(word);
@@ -42,13 +44,21 @@ public class QueryProcessor {
             return Double.compare(o2.rank, o1.rank);
         }));
 
+
+        //logs falla7y
         for(var Result : RankedPages) {
             System.out.println(Result);
         }
+        //return result list of json
+        List<Document> searchResult = new ArrayList<>();
+        for (var doc:RankedPages) {
+            searchResult.add(doc.toJSON());
+        }
+        return searchResult;
     }
 
     public static void main(String[] args) {
-        QueryProcessor magic = new QueryProcessor("local", new dbManager());
-        magic.rankQuery();
+//        QueryProcessor magic = new QueryProcessor("local drug addicts", new dbManager());
+//        magic.rankQuery();
     }
 }

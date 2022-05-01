@@ -42,6 +42,7 @@ public class PageIndexer {
     private static long currentHash = 0;
     private static long count = 0;
     private static long length = 0;
+    private static String title;
 
     private static String currentUrl = "";
 
@@ -105,6 +106,7 @@ public class PageIndexer {
             currentHash = hash;
             length = html.text().split("\\s+").length;
             count = 0;
+            title = html.title();
             htmlparser(html);
             Manager.bulkWriteIndexer();
             Manager.updateIndexStatus(hash,true);
@@ -129,7 +131,7 @@ public class PageIndexer {
                     count++;
                     if (stemmed == null || stemmed.isBlank())
                         continue;
-                    Manager.insertOccurrence(currentUrl, stemmed, "body", count , length, currentHash, exactWord, tNode.text());
+                    Manager.insertOccurrence(currentUrl, stemmed, "body", count , length, title, currentHash, exactWord, tNode.text());
                 }
             } else {
                 htmlparser(n);

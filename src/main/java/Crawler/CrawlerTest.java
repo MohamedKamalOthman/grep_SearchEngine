@@ -26,11 +26,11 @@ public class CrawlerTest {
         ArrayList<WebCrawler> crawlers = new ArrayList<>();
         FileHtmlPageSaver HtmlSaver = new FileHtmlPageSaver(pathName, Manager);
         FileUrlListHandler UrlListHandler = new FileUrlListHandler("Urls.txt");
-        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(1, UrlListHandler, HtmlSaver, Manager)));
-        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(2, UrlListHandler, HtmlSaver, Manager)));
-        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(3, UrlListHandler, HtmlSaver, Manager)));
-        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(4, UrlListHandler, HtmlSaver, Manager)));
-        //crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(5, UrlListHandler, HtmlSaver, Manager)));
+        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(1, UrlListHandler, HtmlSaver, Manager)));
+        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(2, UrlListHandler, HtmlSaver, Manager)));
+        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(3, UrlListHandler, HtmlSaver, Manager)));
+        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(4, UrlListHandler, HtmlSaver, Manager)));
+        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(5, UrlListHandler, HtmlSaver, Manager)));
         for (WebCrawler w : crawlers) {
             try {
                 w.getThread().join();

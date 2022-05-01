@@ -61,6 +61,9 @@ public class PageRanker {
                 }
             result.rank *= 2 * (count / (double) totalLength);
             }
+            result.title = (String)occurrence.get("title");
+            if(result.topParagraphs.isEmpty())
+                result.topParagraphs.add(result.paragraphs.get(0));
             Results.add(result);
         }
         return Results;

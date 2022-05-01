@@ -23,7 +23,7 @@
         *ngFor="let result of results | slice: (page-1) * pageSize : page * pageSize; let i = index">
         <h2><a href="{{result.url}}">{{result.title}}</a>
         </h2>
-        <a href="{{result.url}}">{{result.url}}</a>
+        <a href="{{result.url}}" class="text-success">{{result.url}}</a>
         <p [innerHTML]="highlight(i+(page-1)*pageSize)" class="fw-light"></p>
     </div>
     <div class="text-white text-center mt-5 mb-5 ">
