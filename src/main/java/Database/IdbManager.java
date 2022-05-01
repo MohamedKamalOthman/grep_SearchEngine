@@ -39,4 +39,6 @@ public interface IdbManager {
     public void insertOccurrence(String url, String value, String text_type, long location, long length, long hash, String exactWord, String paragraph);
 
     public void bulkWriteIndexer();
+
+    public boolean resetCrawledStatus();
 }
