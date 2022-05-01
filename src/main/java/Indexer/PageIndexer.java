@@ -45,20 +45,21 @@ public class PageIndexer {
 
     private static String currentUrl = "";
 
-    static HashSet<String> stopWords = new HashSet<>(Arrays.asList(new String[]{
+    private static final HashSet<String> stopWords = new HashSet<>(Arrays.asList(
             "a", "an", "and", "are", "as", "at", "be", "but", "by",
             "for", "if", "in", "into", "is", "it",
             "no", "not", "of", "on", "or", "such",
             "that", "the", "their", "then", "there", "these",
             "they", "this", "to", "was", "will", "with"
-    }));
+    ));
 
 
     public PageIndexer(String pathName, IdbManager manager) {
-        this.Manager = manager;
+        Manager = manager;
         PathName = pathName;
     }
 
+    //---------------------DEPRECIATED-----------------------------------
     public static List<String> stem(String term) throws Exception {
         Analyzer analyzer = new StandardAnalyzer();
         TokenStream result = analyzer.tokenStream(null, term);
@@ -83,7 +84,6 @@ public class PageIndexer {
 
     public static String stemWord(String s) {
         PorterStemmer stem = new PorterStemmer();
-        s = s.toLowerCase();
         if (stopWords.contains(s))
             return null;
         stem.setCurrent(s);
@@ -118,17 +118,18 @@ public class PageIndexer {
 
     private static void htmlparser(Node element) {
         try {
-
             for (Node n : element.childNodes()) {
             if (n instanceof TextNode tNode && !tNode.isBlank()) {
-                var split = tNode.text().split("\\s+");
-
+                String text = tNode.text();
+                text = text.replaceAll("\\p{Punct}", " ");
+                var split = text.split("\\s+");
                 for (var exactWord : split) {
-                    var stemmed = stem(exactWord);
+                    exactWord = exactWord.toLowerCase();
+                    var stemmed = stemWord(exactWord);
                     count++;
-                    if (stemmed.isEmpty() || exactWord.isBlank())
+                    if (stemmed == null || stemmed.isBlank())
                         continue;
-                    Manager.insertOccurrence(currentUrl, stemmed.get(0), "body", count , length, currentHash, exactWord, tNode.text());
+                    Manager.insertOccurrence(currentUrl, stemmed, "body", count , length, currentHash, exactWord, tNode.text());
                 }
             } else {
                 htmlparser(n);
@@ -141,7 +142,6 @@ public class PageIndexer {
 
     public static void main(String[] args) {
         dbManager db = new dbManager();
-        System.out.println(stemWord("a"));
         PageIndexer pageIndexer = new PageIndexer("." + File.separator + "Files" + File.separator, db);
         while(pageIndexer.StartIndexing());
 //        List<String> test = null;
