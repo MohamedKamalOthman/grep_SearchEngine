@@ -46,9 +46,13 @@ public class PageRanker {
             result.paragraphs = new ArrayList<>();
             result.topParagraphs = new ArrayList<>();
             for(Document place : (ArrayList<Document>) occurrence.get("places")){
-                result.paragraphs.add(((String) place.get("paragraph")).trim());
+                ParagraphData p = new ParagraphData();
+                p.exactWord = (String) place.get("exactWord");
+                p.location = (long) place.get("location");
+                p.paragraph = ((String) place.get("paragraph")).trim();
+                result.paragraphs.add(p);
                 if(((String) place.get("exactWord")).equals(word))
-                    result.topParagraphs.add(((String) place.get("paragraph")).trim());
+                    result.topParagraphs.add(p);
             }
             Results.add(result);
         }

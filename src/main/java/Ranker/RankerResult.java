@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 public class RankerResult {
     public String url;
-    public ArrayList<String> paragraphs;
-    public ArrayList<String> topParagraphs;
+    public ArrayList<ParagraphData> paragraphs;
+    public ArrayList<ParagraphData> topParagraphs;
     public double rank;
 
 
@@ -14,13 +14,13 @@ public class RankerResult {
         String result =  "URL = " + url + "\n" +
                 "With Rank = " + rank + "\n" +
                 "Top Paragraphs : \n";
-        for(String p : paragraphs)
-            result += p + "\n-------------------------------------- \n";
+        for(var p : paragraphs)
+            result += p.location + "\n" + p.paragraph + "\n-------------------------------------- \n";
 
         result +="All Paragraphs : \n";
 
-        for(String p : paragraphs)
-            result += p + "\n-------------------------------------- \n";
+        for(var p : paragraphs)
+            result += p.location + "\n" + p.paragraph + "\n-------------------------------------- \n";
 
         return result;
     }
