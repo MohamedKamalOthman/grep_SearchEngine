@@ -39,25 +39,17 @@ export class ResultsComponent implements OnInit {
   });
   q = new FormControl();
   //this will be loaded from data base
-  options: string[] = [
-    'Champs-Élysées',
-    'Lombard Street',
-    'Abbey Road',
-    'Fifth Avenue',
-    'Champs-Élysées',
-    'Lombard Street',
-    'Abbey Road',
-    'Fifth Avenue',
-  ];
+  options!: string[];
   filteredOptions!: Observable<string[]>;
   //Functions
 
   search(): void {
-    console.log(this.q);
+    // console.log(this.q);
     if (!this.q?.value.trim()) return;
     this.router.routeReuseStrategy.shouldReuseRoute = () => false;
     this.router.onSameUrlNavigation = 'reload';
     this.router.navigate(['/result', { q: this.q.value }]);
+    this.options.push(this.q.value);
   }
   ngOnInit(): void {
     const routeParams = this.route.snapshot.paramMap;
@@ -67,16 +59,21 @@ export class ResultsComponent implements OnInit {
     }
     this.query = q;
     let response = this.http.get('http://localhost:8080/api/GoFind/' + q);
+    let prevQueries = this.http.get('http://localhost:8080/api/prevQueries/');
     response.subscribe((data) => {
       this.results = data as any;
       this.pages = Math.ceil(this.results.length / 10.0);
       this.pageNumbers = Array.from(Array(this.pages).keys());
-      console.log(this.results);
+      // console.log(this.results);
     });
-    this.filteredOptions = this.q.valueChanges.pipe(
-      startWith(''),
-      map((value) => this._filter(value))
-    );
+    prevQueries.subscribe((data) => {
+      this.options = data as string[];
+      this.filteredOptions = this.q.valueChanges.pipe(
+        startWith(''),
+        map((value) => this._filter(value))
+      );
+      console.log(data);
+    });
   }
   nextPage() {
     if (this.pages < this.page) return;
@@ -110,7 +107,7 @@ export class ResultsComponent implements OnInit {
   public highlight(i: number) {
     let words = this.query?.split(/[ ,]+/);
     if (this.query) {
-      console.log(words);
+      // console.log(words);
       for (let index = 0; index < words!.length; index++) {
         this.results[i].p = this.results[i].p.replace(
           new RegExp(words![index], 'gi'),
