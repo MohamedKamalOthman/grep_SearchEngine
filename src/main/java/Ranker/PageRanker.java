@@ -2,6 +2,7 @@ package Ranker;
 
 import Database.IdbManager;
 import Database.dbManager;
+import Indexer.PageIndexer;
 import org.bson.Document;
 
 import java.net.MalformedURLException;
@@ -16,8 +17,9 @@ public class PageRanker {
     }
 
     public ArrayList<RankerResult> GetSingleWordResults(String word){
-        // Should Stem The Word First Then Search For it
-        String stemmed_word = word;
+        String stemmed_word = PageIndexer.stemWord(word);
+        if(stemmed_word == null)
+            return null;
         Document doc = Manager.getWordDocument(stemmed_word);
         //System.out.println(doc.toJson());
         Document occurrences = (Document) doc.get("occurrences");

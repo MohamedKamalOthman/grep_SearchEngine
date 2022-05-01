@@ -25,5 +25,9 @@ public class RankerResult {
         return result;
     }
 
+    @Override
+    public int hashCode() {
+        return url.hashCode();
+    }
 
 }
