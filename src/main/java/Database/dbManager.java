@@ -50,8 +50,8 @@ public class dbManager implements IdbManager {
             return;
         ArrayList seed = new ArrayList<>();
         seed.add("https://en.wikipedia.org/wiki/Main_Page");
-        seed.add("https://leetcode.com/problemset/all/");
-        seed.add("https://stackoverflow.com/");
+        seed.add("https://codeforces.com");
+        seed.add("https://stackoverflow.com");
         saveUrls(seed);
     }
     public void resetReCrawl(){

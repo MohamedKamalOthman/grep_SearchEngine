@@ -20,10 +20,9 @@ public class CrawlerTest {
         ArrayList<WebCrawler> crawlers = new ArrayList<>();
         FileHtmlPageSaver htmlSaver = new FileHtmlPageSaver(pathName, Manager);
         FileUrlListHandler urlListHandler = new FileUrlListHandler("Urls.txt");
-
-        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(1, urlListHandler, htmlSaver, Manager)));
-        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(2, urlListHandler, htmlSaver, Manager)));
-        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(3, urlListHandler, htmlSaver, Manager)));
+  //     crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(1, urlListHandler, htmlSaver, Manager)));
+ //       crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(2, urlListHandler, htmlSaver, Manager)));
+//        crawlers.add(new WebCrawler(Manager.fetchUrl(), new WebCrawlerState(3, urlListHandler, htmlSaver, Manager)));
 
         for (WebCrawler w : crawlers) {
             try {

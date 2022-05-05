@@ -43,6 +43,7 @@ public class PageIndexer {
     private static long count = 0;
     private static long length = 0;
     private static String title;
+    private static String[] allText;
 
     private static String currentUrl = "";
 
@@ -107,6 +108,8 @@ public class PageIndexer {
             length = html.text().split("\\s+").length;
             count = 0;
             title = html.title();
+            var text = html.text().replaceAll("\\p{Punct}", " ");
+            allText = text.split("\\s+");
             htmlparser(html);
             Manager.bulkWriteIndexer();
             Manager.updateIndexStatus(hash,true);
@@ -131,18 +134,13 @@ public class PageIndexer {
                     count++;
                     if (stemmed == null || stemmed.isBlank())
                         continue;
-                    String minP = tNode.text();
-                    while(minP.length() < 100)
-                    {
-                        Node parent = tNode.parent();
-                        while (!(parent instanceof TextNode pNode && !pNode.isBlank())) {
-                            parent = parent.parent();
-                        }
-                        String maxP = pNode.text();
-                        if (maxP.length() > 250)
-                            continue;
+                    String currentP = "";
+                    int s = count < 50 ? 0 : (int) (count - 50);
+                    int e = allText.length < s + 100 ? allText.length : s + 100;
+                    for (int i = s; i < e; i++) {
+                        currentP += allText[i] + " ";
                     }
-                    Manager.insertOccurrence(currentUrl, stemmed, "body", count , length, title, currentHash, exactWord, tNode.text());
+                    Manager.insertOccurrence(currentUrl, stemmed, "body", count , length, title, currentHash, exactWord, currentP);
                 }
             } else {
                 htmlparser(n);
@@ -168,3 +166,20 @@ public class PageIndexer {
 
     }
 }
+//    String currentP = tNode.text();
+//    String previousP;
+//                    while(currentP.length() < 100 && tNode.hasParent())
+//        {
+//        Node parent = tNode.parent();
+//        while (!(parent instanceof TextNode pNode && !pNode.isBlank())) {
+//        parent = parent.parent();
+//        }
+//        tNode = pNode;
+//        previousP = currentP;
+//        currentP = pNode.text();
+//        if(currentP.length() > 250){
+//        currentP = previousP;
+//        break;
+//        }
+//        }
+//        if(currentP.length() > 10)
