@@ -8,6 +8,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { map, Observable, startWith } from 'rxjs';
+import { FindService } from '../find.service';
+import { QueriesService } from '../queries.service';
 
 @Component({
   selector: 'app-results',
@@ -19,7 +21,9 @@ export class ResultsComponent implements OnInit {
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private findService : FindService,
+    private queriesService : QueriesService
   ) {}
   // font awsome
   faCaretRight = faCaretRight;
@@ -58,15 +62,13 @@ export class ResultsComponent implements OnInit {
       this.router.navigate(['/search']);
     }
     this.query = q;
-    let response = this.http.get('http://localhost:8080/api/GoFind/' + q);
-    let prevQueries = this.http.get('http://localhost:8080/api/prevQueries/');
-    response.subscribe((data) => {
+    this.findService.Find(q).subscribe((data) => {
       this.results = data as any;
       this.pages = Math.ceil(this.results.length / 10.0);
       this.pageNumbers = Array.from(Array(this.pages).keys());
       // console.log(this.results);
     });
-    prevQueries.subscribe((data) => {
+    this.queriesService.Queries().subscribe((data) => {
       this.options = data as string[];
       this.filteredOptions = this.q.valueChanges.pipe(
         startWith(''),
