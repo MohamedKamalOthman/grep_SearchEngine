@@ -58,7 +58,7 @@ public class QueryProcessor {
     }
 
     public static void main(String[] args) {
-//        QueryProcessor magic = new QueryProcessor("local drug addicts", new dbManager());
-//        magic.rankQuery();
+        QueryProcessor magic = new QueryProcessor(new dbManager());
+        magic.rankQuery("free wikipedia help us");
     }
 }

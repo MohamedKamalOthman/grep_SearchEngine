@@ -8,12 +8,14 @@ import org.bson.Document;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class PageRanker {
     private final IdbManager Manager;
-
+    private final HashMap<String,Number> popularityMap;
     public PageRanker(IdbManager manager) {
         this.Manager = manager;
+        popularityMap = Manager.getPopularity();
     }
 
     public ArrayList<RankerResult> GetSingleWordResults(String word){
@@ -21,6 +23,8 @@ public class PageRanker {
         if(stemmed_word == null)
             return null;
         Document doc = Manager.getWordDocument(stemmed_word);
+        if(doc == null)
+            return new ArrayList<>();
         //System.out.println(doc.toJson());
         Document occurrences = (Document) doc.get("occurrences");
         long count_occurrences = occurrences.keySet().size();
@@ -36,12 +40,11 @@ public class PageRanker {
             double normalized_term_frequency = (double) ((int)occurrence.get("term_frequency")) / (double) totalLength;
             if(normalized_term_frequency > 0.5)
                 continue;
-            int popularity = 1;
             result.rank = inverse_document_frequency * normalized_term_frequency;
             try {
                 var host = new URL(result.url);
-                popularity = Manager.getPopularity(host.getHost());
-                result.rank *= Math.abs(Math.log((double) popularity / 5000.0));
+                Number popularity = popularityMap.getOrDefault(host.getHost(),1);
+                result.rank *= Math.abs(Math.log( (double)((int)popularity) / 5000.0));
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }

@@ -34,7 +34,10 @@ public class WebCrawlerState {
         Manager = manager;
     }
     public boolean isFinished(){
-        return finished;
+        synchronized (Manager){
+            finished = Manager.isFinishedCrawling();
+            return finished;
+        }
     }
 
     public boolean isUrlVisited(String URL) {
@@ -52,7 +55,7 @@ public class WebCrawlerState {
 
     public boolean isAllowedByRobotsTxt(String HostUrl, String Url) {
         //return true if host doesn't have robots.txt
-        if(noRobotsTxtsSet.contains(HostUrl))
+        if(noRobotsTxtsSet.get(HostUrl) != null)
             return true;
         RobotsTxt RobotsTxtFile = RobotsTxtsMap.get(HostUrl);
         //return the file if I already downloaded it
@@ -64,9 +67,9 @@ public class WebCrawlerState {
             urlConnection.setConnectTimeout(1500);
             InputStream inputStream = urlConnection.getInputStream();;
             RobotsTxtFile = RobotsTxt.read(inputStream);
-        } catch (IOException e) {
+        } catch (Exception e) {
             noRobotsTxtsSet.put(HostUrl,"");
-            e.printStackTrace();
+//            e.printStackTrace();
             return true;
         }
         RobotsTxtsMap.put(HostUrl, RobotsTxtFile);
@@ -74,6 +77,8 @@ public class WebCrawlerState {
     }
 
     public String getNextUrl() {
+        if(isFinished())
+            return "";
         return Manager.fetchUrl();
     }
 
@@ -91,7 +96,7 @@ public class WebCrawlerState {
 
     public boolean saveUrls(ArrayList<String> urls) {
         boolean result =  Manager.saveUrls(urls);
-        finished = Manager.isFinishedCrawling();
+        finished = isFinished();
         if (!FinishedCrawlingUrls.isEmpty() && finished)
         {
             Manager.updateUrls(FinishedCrawlingUrls, 2);

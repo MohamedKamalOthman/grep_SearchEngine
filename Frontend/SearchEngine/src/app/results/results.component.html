@@ -8,7 +8,7 @@
                 <div class="input-group col-sm-7 input-group-lg">
                     <div class="input-group-prepend"> <span class="input-group-text google"><img
                                 src="https://img.icons8.com/color/48/000000/google-logo.png"></span> </div> <input
-                        id="q" name="q" type="text" class="form-control" [formControl]="q" [matAutocomplete]="auto">
+                        id="q" name="q" type="text" class="form-control" [formControl]="q" [matAutocomplete]="auto" [value]="q?.value">
                     <mat-autocomplete #auto="matAutocomplete">
                         <mat-option *ngFor="let option of filteredOptions | async | slice : 0 : 5" [value]="option">
                             {{option}}
@@ -19,12 +19,12 @@
             </form>
         </div>
     </div>
-    <div class="text-white mt-3 col-sm-6 ps-5 ms-5 "
+    <div class="text-white col-sm-6 ps-5 ms-5 mb-4 "
         *ngFor="let result of results | slice: (page-1) * pageSize : page * pageSize; let i = index">
-        <h2><a href="{{result.url}}">{{result.title}}</a>
-        </h2>
-        <a href="{{result.url}}" class="text-success">{{result.url}}</a>
-        <p [innerHTML]="highlight(i+(page-1)*pageSize)" class="fw-light"></p>
+        <p><a href="{{result.url}}" class="text-decoration-none fs-5"  style="color:#8ab4f8;" >{{result.title}}</a>
+        </p>
+        <a href="{{result.url}}" class="text-success">{{result.url | slice : 0 : 50}}</a>
+        <p [innerHTML]="highlight(i+(page-1)*pageSize)" class="fw-lighter"></p>
     </div>
     <div class="text-white text-center mt-5 mb-5 ">
         <h2 class="d-inline  me-3" style="cursor: pointer;">

@@ -8,7 +8,9 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Projections.include;
@@ -34,13 +36,32 @@ public class dbManager implements IdbManager {
         Testing = database1.getCollection("testing");
     }
 
+    //crawler first run
+    public void initializeCrawlerDB(){
+        //Reset interrupted crawlers
+        Document query = new Document().append("crawled",1);
+        Crawler.updateMany(query,Updates.set("crawled",0),new UpdateOptions().upsert(false));
+        //set seed if not already exist
+        long count = Crawler.countDocuments();
+        if (count >= 5100) {
+            finishedCrawling = true;
+        }
+        if(count != 0)
+            return;
+        ArrayList seed = new ArrayList<>();
+        seed.add("https://en.wikipedia.org/wiki/Main_Page");
+        seed.add("https://leetcode.com/problemset/all/");
+        seed.add("https://stackoverflow.com/");
+        saveUrls(seed);
+    }
+    public void resetReCrawl(){
+
+    }
     //region Crawler Methods
     public boolean savePage(String url, long docHash, boolean indexed) {
         Document document = new Document();
         document.append("url", url);
-        document.append("hash", docHash);
-        document.append("indexed", indexed);
-        PageSaver.insertOne(document);
+        PageSaver.updateOne(document,Updates.combine(Updates.set("indexed", indexed),Updates.set("hash", docHash)) ,new UpdateOptions().upsert(true));
         return true;
     }
 
@@ -73,11 +94,8 @@ public class dbManager implements IdbManager {
     }
 
     public boolean saveUrls(ArrayList<String> urls) {
-        long count = Crawler.countDocuments();
-        if (count >= 5100) {
-            finishedCrawling = true;
+        if(finishedCrawling)
             return false;
-        }
         List crawlerBulkWrite = new ArrayList();
 
         for (String url : urls) {
@@ -88,10 +106,10 @@ public class dbManager implements IdbManager {
             UpdateOptions options = new UpdateOptions().upsert(true);
             crawlerBulkWrite.add(new UpdateOneModel(query, updates, options));
         }
-
+        if(!crawlerBulkWrite.isEmpty())
         try {
             var result = Crawler.bulkWrite(crawlerBulkWrite);
-            count = Crawler.countDocuments();
+            long count = Crawler.countDocuments();
             if (count >= 5100) {
                 finishedCrawling = true;
             }
@@ -100,6 +118,7 @@ public class dbManager implements IdbManager {
             System.err.println("Unable to update due to an error: " + me);
             return false;
         }
+        return false;
     }
 
     public boolean isFinishedCrawling() {
@@ -116,6 +135,7 @@ public class dbManager implements IdbManager {
     }
 
     public String fetchUrl() {
+
         Document query = new Document().append("crawled", 0);
         Bson updates = Updates.combine(
                 Updates.set("crawled", 1)
@@ -227,14 +247,15 @@ public class dbManager implements IdbManager {
             UpdateOptions options = new UpdateOptions().upsert(true);
             popularityBulkWrtie.add(new UpdateOneModel(query, updates, options));
         }
-
-        try {
-            var result = Popularity.bulkWrite(popularityBulkWrtie);
-            return result.getInsertedCount() != 0;
-        } catch (MongoException me) {
-            System.err.println("Unable to update due to an error: " + me);
-            return false;
-        }
+        if(!popularityBulkWrtie.isEmpty())
+            try {
+                var result = Popularity.bulkWrite(popularityBulkWrtie);
+                return result.getInsertedCount() != 0;
+            } catch (MongoException | IllegalArgumentException me) {
+                System.err.println("Unable to update due to an error: " + me);
+                return false;
+            }
+        return false;
     }
 
     public void insertOccurrence(String url, String value, String text_type, long location, long length, String title,long hash, String exactWord, String paragraph) {
@@ -304,7 +325,7 @@ public class dbManager implements IdbManager {
     public void bulkWriteIndexer() {
         try {
             SearchIndex.bulkWrite(indexerBulkWrite);
-        } catch (MongoException me) {
+        } catch (Exception me) {
             System.err.println("Unable to update due to an error: " + me);
         }
         indexerBulkWrite.clear();
@@ -315,11 +336,15 @@ public class dbManager implements IdbManager {
         return result;
     }
 
-    public int getPopularity(String host){
-        var result = Popularity.find(new Document().append("host",host)).first();
-        if(result == null)
-            return 1;
-        return (int)result.get("refCount");
+    public HashMap<String,Number> getPopularity(){
+        HashMap<String,Number> map = new HashMap<>();
+        FindIterable<Document> resultsIterable = Popularity.find(new Document());
+        MongoCursor<Document> resultsCursor = resultsIterable.cursor();
+        for (MongoCursor<Document> it = resultsCursor; it.hasNext(); ) {
+            Document result = it.next();
+            map.put((String)result.get("host"),(Number)result.get("refCount"));
+        }
+        return map;
     }
 
     public void Test()

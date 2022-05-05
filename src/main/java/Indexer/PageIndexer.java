@@ -131,6 +131,17 @@ public class PageIndexer {
                     count++;
                     if (stemmed == null || stemmed.isBlank())
                         continue;
+                    String minP = tNode.text();
+                    while(minP.length() < 100)
+                    {
+                        Node parent = tNode.parent();
+                        while (!(parent instanceof TextNode pNode && !pNode.isBlank())) {
+                            parent = parent.parent();
+                        }
+                        String maxP = pNode.text();
+                        if (maxP.length() > 250)
+                            continue;
+                    }
                     Manager.insertOccurrence(currentUrl, stemmed, "body", count , length, title, currentHash, exactWord, tNode.text());
                 }
             } else {

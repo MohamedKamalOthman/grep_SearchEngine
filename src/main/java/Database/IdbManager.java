@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public interface IdbManager {
+
+    public void initializeCrawlerDB();
+
     public boolean savePage(String url, long docHash, boolean indexed);
 
     public String fetchUrl();
@@ -28,7 +31,7 @@ public interface IdbManager {
 
     public Document getWordDocument(String word);
 
-    public int getPopularity(String host);
+    public HashMap<String,Number> getPopularity();
 
     public boolean incrementHost(String host);
 

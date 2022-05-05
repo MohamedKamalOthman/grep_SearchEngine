@@ -11,7 +11,7 @@ export class QueriesService {
   constructor(private http : HttpClient) { }
 
   Queries (): Observable<string[]> {
-    return this.http.get<string[]>(`${environment.baseUrl}/GoFind/prevQueries/`);
+    return this.http.get<string[]>(`${environment.baseUrl}/prevQueries/`);
   }
 
 }

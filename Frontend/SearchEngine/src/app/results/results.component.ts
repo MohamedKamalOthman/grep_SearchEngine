@@ -109,7 +109,7 @@ export class ResultsComponent implements OnInit {
   public highlight(i: number) {
     let words = this.query?.split(/[ ,]+/);
     if (this.query) {
-      // console.log(words);
+    console.log(words);
       for (let index = 0; index < words!.length; index++) {
         this.results[i].p = this.results[i].p.replace(
           new RegExp(words![index], 'gi'),

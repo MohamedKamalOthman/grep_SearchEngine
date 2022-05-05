@@ -46,7 +46,7 @@ public class WebCrawler implements Runnable {
                     try {
                         //Normalize url
                         NextLink = new URL(URI.create(link.absUrl("href").toLowerCase()).normalize().toString());
-                    } catch (MalformedURLException e) {
+                    } catch (MalformedURLException | IllegalArgumentException e) {
                         continue;
                     }
                     String NextUrl = NextLink.toString();
@@ -78,7 +78,7 @@ public class WebCrawler implements Runnable {
                 return doc;
             }
             return null;
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
