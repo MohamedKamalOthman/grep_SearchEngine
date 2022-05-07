@@ -5,23 +5,28 @@ import org.jsoup.nodes.Document;
 import java.util.ArrayList;
 import java.util.List;
 
+//Contains all indexed content of a webpage
 public class HTMLPage {
     public Document doc;
     public String url;
     public String title;
     public List<Word> words;
     long wordCount;
+
+    //Helper class to contain information about each indexed word
     public static class Word {
         public String exactWord;
         public String stemmedWord;
         public long position;
         public String tag;
+        public String paragraph;
 
-        public Word(String exactWord, String stemmedWord, long position, String tag) {
+        public Word(String exactWord, String stemmedWord, long position, String tag, String paragraph) {
             this.exactWord = exactWord;
             this.stemmedWord = stemmedWord;
             this.position = position;
             this.tag = tag;
+            this.paragraph = paragraph;
         }
 
 
@@ -32,7 +37,7 @@ public class HTMLPage {
                     ", stemmedWord='" + stemmedWord + '\'' +
                     ", position=" + position +
                     ", tag='" + tag + '\'' +
-                    '}';
+                    "}\nparagraph='" + paragraph + '\'';
         }
     }
 

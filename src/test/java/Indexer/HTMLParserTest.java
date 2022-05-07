@@ -18,10 +18,15 @@ class HTMLParserTest {
         Document doc = Jsoup.parse(new File("." + File.separator + "TestFiles" + File.separator + "UnitTestingWikipedia.html"), null);
         HTMLParser parser = new HTMLParser(doc, "https://en.wikipedia.org/wiki/Unit_testing");
         page = parser.parse();
+        System.out.println(System.currentTimeMillis() - start);
 
         System.out.println(page.title);
-        for(var word : page.words)
+
+        for(var word : page.words) {
             System.out.println(word);
+        }
+
+        System.out.println(page.words.size());
     }
 
 
