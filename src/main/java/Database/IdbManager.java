@@ -1,9 +1,11 @@
 package Database;
 
+import com.mongodb.client.FindIterable;
 import org.bson.Document;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public interface IdbManager {
 
@@ -30,6 +32,8 @@ public interface IdbManager {
     public boolean docExists(long docHash);
 
     public Document getWordDocument(String word);
+
+    public FindIterable<Document> getMultipleWordDocument(List<String> words);
 
     public HashMap<String,Number> getPopularity();
 

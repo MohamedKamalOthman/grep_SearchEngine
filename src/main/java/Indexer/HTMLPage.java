@@ -10,8 +10,9 @@ public class HTMLPage {
     public Document doc;
     public String url;
     public String title;
-    public List<Word> words;
-    long wordCount;
+    public List<Word> words = new ArrayList<>();;
+    long wordCount = 0;
+    long crcHash;
 
     //Helper class to contain information about each indexed word
     public static class Word {
@@ -41,10 +42,9 @@ public class HTMLPage {
         }
     }
 
-    HTMLPage(Document Doc, String Url) {
+    HTMLPage(Document Doc, String Url, long hash) {
         doc = Doc;
         url = Url;
-        words = new ArrayList<>();
-        wordCount = 0;
+        crcHash = hash;
     }
 }

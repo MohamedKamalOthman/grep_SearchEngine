@@ -27,7 +27,7 @@ public class HTMLParserUtilities {
             put("mark", 1);
             put("i", 1);
             put("blockquote", 1);
-            put("body", 1);
+            put("body", 0);
             put("div", 1);
             put("li", 1);
             put("ol", 2);

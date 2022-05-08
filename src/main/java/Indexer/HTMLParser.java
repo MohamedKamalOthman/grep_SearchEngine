@@ -13,14 +13,20 @@ import static Indexer.PageIndexer.stemWord;
 public class HTMLParser {
     private HTMLPage page;
 
-    HTMLParser(Document JSOUPDocument, String Url) {
-        page = new HTMLPage(JSOUPDocument, Url);
+    HTMLParser() {
+        page = null;
     }
 
-    public void setPage(Document JSOUPDocument, String Url) {
-        page = new HTMLPage(JSOUPDocument, Url);
+    HTMLParser(Document JSOUPDocument, String Url, long hash) {
+        page = new HTMLPage(JSOUPDocument, Url, hash);
     }
 
+    public void setPage(Document JSOUPDocument, String Url, long hash) {
+        page = new HTMLPage(JSOUPDocument, Url, hash);
+    }
+    public void setPage(HTMLPage Page) {
+        page = Page;
+    }
     /**
      * parses current html webpage into indexed stemmed words.
      * @return parsed webpage.

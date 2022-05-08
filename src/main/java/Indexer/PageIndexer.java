@@ -3,50 +3,29 @@ package Indexer;
 import Database.IdbManager;
 import Database.dbManager;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.StopFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.en.PorterStemFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.AnalysisSPILoader;
-import org.apache.lucene.analysis.util.StemmerUtil;
-import org.apache.lucene.util.Version;
 import org.bson.Document;
-import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import java.net.URL;
 import java.util.*;
 
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
 import org.tartarus.snowball.ext.PorterStemmer;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class PageIndexer {
     private static IdbManager Manager;
     private final String PathName;
-    private static long currentHash = 0;
-    private static long count = 0;
-    private static long length = 0;
-    private static String title;
-    private static String[] allText;
-
-    private static String currentUrl = "";
-
+    private final HTMLParser HTMLParser = new HTMLParser();
     private static final HashSet<String> stopWords = new HashSet<>(Arrays.asList(
             "a", "an", "and", "are", "as", "at", "be", "but", "by",
             "for", "if", "in", "into", "is", "it",
@@ -93,68 +72,76 @@ public class PageIndexer {
         return stem.getCurrent();
     }
 
-    public boolean StartIndexing() {
-        Document doc = Manager.getUrlForIndexing();
-        if(doc == null)
-            return false;
-        //System.out.println(doc.toString());
-        long hash = (long) doc.get("hash");
-        String url = (String) doc.get("url");
-        File file = new File(PathName + hash + ".html");
-        try {
-            org.jsoup.nodes.Document html = Jsoup.parse(file, null);
-            currentUrl = url;
-            currentHash = hash;
-            length = html.text().split("\\s+").length;
-            count = 0;
-            title = html.title();
-            var text = html.text().replaceAll("\\p{Punct}", " ");
-            allText = text.split("\\s+");
-            htmlparser(html);
-            Manager.bulkWriteIndexer();
-            Manager.updateIndexStatus(hash,true);
-            System.out.println("Finished Indexing "+ url);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
+    private void indexPage(HTMLPage page) {
+        HTMLParser.setPage(page);
+        page = HTMLParser.parse();
+        for(HTMLPage.Word word : page.words) {
+            System.out.println(word);
+            Manager.insertOccurrence(page.url, word.stemmedWord, word.tag, word.position, page.wordCount, page.title, page.crcHash, word.exactWord, word.paragraph);
         }
-        return true;
+        Manager.updateIndexStatus(page.crcHash, true);
+        Manager.bulkWriteIndexer();
     }
 
+    public void IndexAll() {
+        while (true) {
+            Document doc = Manager.getUrlForIndexing();
+            if (doc == null) {
+                return;
+            }
+            long hash = (long) doc.get("hash");
+            String url = (String) doc.get("url");
+            File file = new File(PathName + hash + ".html");
+            HTMLPage page;
+
+            try {
+                page = new HTMLPage(Jsoup.parse(file, null), url, hash);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                System.out.println("Error JSOUP parsing webpage");
+                return;
+            }
+
+            indexPage(page);
+        }
+    }
+
+    //---------------------DEPRECIATED-----------------------------------
     private static void htmlparser(Node element) {
-        try {
-            for (Node n : element.childNodes()) {
-            if (n instanceof TextNode tNode && !tNode.isBlank()) {
-                String text = tNode.text();
-                text = text.replaceAll("\\p{Punct}", " ");
-                var split = text.split("\\s+");
-                for (var exactWord : split) {
-                    exactWord = exactWord.toLowerCase();
-                    var stemmed = stemWord(exactWord);
-                    count++;
-                    if (stemmed == null || stemmed.isBlank())
-                        continue;
-                    String currentP = "";
-                    int s = count < 50 ? 0 : (int) (count - 50);
-                    int e = allText.length < s + 100 ? allText.length : s + 100;
-                    for (int i = s; i < e; i++) {
-                        currentP += allText[i] + " ";
-                    }
-                    Manager.insertOccurrence(currentUrl, stemmed, "body", count , length, title, currentHash, exactWord, currentP);
-                }
-            } else {
-                htmlparser(n);
-            }
-        }
-        }catch (Exception e){
-                e.printStackTrace();
-            }
-        }
+//        try {
+//            for (Node n : element.childNodes()) {
+//                if (n instanceof TextNode tNode && !tNode.isBlank()) {
+//                    String text = tNode.text();
+//                    text = text.replaceAll("\\p{Punct}", " ");
+//                    var split = text.split("\\s+");
+//                    for (var exactWord : split) {
+//                        exactWord = exactWord.toLowerCase();
+//                        var stemmed = stemWord(exactWord);
+//                        count++;
+//                        if (stemmed == null || stemmed.isBlank())
+//                            continue;
+//                        String currentP = "";
+//                        int s = count < 50 ? 0 : (int) (count - 50);
+//                        int e = allText.length < s + 100 ? allText.length : s + 100;
+//                        for (int i = s; i < e; i++) {
+//                            currentP += allText[i] + " ";
+//                        }
+//                        Manager.insertOccurrence(currentUrl, stemmed, "body", count, length, title, currentHash, exactWord, currentP);
+//                    }
+//                } else {
+//                    htmlparser(n);
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+    }
 
     public static void main(String[] args) {
         dbManager db = new dbManager();
         PageIndexer pageIndexer = new PageIndexer("." + File.separator + "Files" + File.separator, db);
-        while(pageIndexer.StartIndexing());
+        pageIndexer.IndexAll();
+        System.out.println("Finished Indexing");
 //        List<String> test = null;
 //        try {
 //            test = pageIndexer.stem("the a is opening of the difficult things in likewise the project");

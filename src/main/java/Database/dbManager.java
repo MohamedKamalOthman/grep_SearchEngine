@@ -12,6 +12,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.mongodb.client.model.Filters.all;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Projections.include;
 
@@ -332,8 +333,12 @@ public class dbManager implements IdbManager {
     }
 
     public Document getWordDocument(String word){
-        var result =  SearchIndex.find(new Document().append("value",word)).first();
-        return result;
+        return SearchIndex.find(new Document().append("value",word)).first();
+    }
+
+    public FindIterable<Document> getMultipleWordDocument(List<String> words) {
+        Bson doc = Filters.in("value", words);
+        return SearchIndex.find(doc);
     }
 
     public HashMap<String,Number> getPopularity(){
