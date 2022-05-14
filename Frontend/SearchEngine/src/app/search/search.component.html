@@ -1,19 +1,27 @@
 <div>
     <div class=" container d-flex justify-content-center mt-5">
-        <img src="assets/img/google_PNG19644.png" class="img-fluid w-50">
+        <img src="assets/img/logo.svg" class="lg-hover">
     </div>
-    <form class="container d-flex justify-content-center mt-5"  [formGroup]="Form" (ngSubmit)="search()">
+    <form class="container d-flex justify-content-center mt-5" [formGroup]="Form" (ngSubmit)="search()">
         <div class="input-group col-sm-7 input-group-lg">
-            <div class="input-group-prepend"> <span class="input-group-text google"><img
-                        src="https://img.icons8.com/color/48/000000/google-logo.png"></span> </div> <input id="q" name="q" type="text"
-                class="form-control" [formControl]="q" [matAutocomplete]="auto">
+            <div class="input-group-prepend" (click)="search()"> <span class="input-group-text logo"><img
+                        src="assets/img/icons8-console-48.png" class="lg-hover"></span>
+            </div>
+            <input id="q" name="q" type="text" class="form-control" [formControl]="q" [matAutocomplete]="auto">
             <mat-autocomplete #auto="matAutocomplete">
-                <mat-option *ngFor="let option of filteredOptions | async | slice : 0 : 5" [value]="option" >
+                <mat-option *ngFor="let option of filteredOptions | async | slice : 0 : 5" [value]="option">
                     {{option}}
                 </mat-option>
             </mat-autocomplete>
-            <div class="input-group-append"> <span class="input-group-text microphone"><img
-                        src="https://img.icons8.com/nolan/48/000000/microphone.png"></span> </div>
+            <a>
+                <div class="input-group-append " (click)="voiceRecognition()">
+                    <span class="input-group-text microphone">
+                        <img src="assets/img/icons8-microphone-48 (1).png" class="lg-hover" *ngIf="!voiceRecognitionOn">
+                        <img src="assets/img/icons8-record-48.png" class="lg-hover recording"
+                            *ngIf="voiceRecognitionOn">
+                    </span>
+                </div>
+            </a>
         </div>
     </form>
 </div>

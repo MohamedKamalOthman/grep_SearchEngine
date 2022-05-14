@@ -3,12 +3,19 @@
     border-bottom-right-radius: 32px !important;
     background-color: #fff;
     margin-left:-10px !important;
+    cursor:pointer;
   }
-  
-  .google {
+  .lg-hover{
+    transition: 0.5s ease;
+  }
+  .lg-hover:hover{
+    transform: scale(1.2);
+  }
+  .logo {
     border-top-left-radius: 32px !important;
     border-bottom-left-radius: 32px !important;
-    background-color: #fff
+    background-color: #fff;
+    cursor:pointer;
   }
   
   .input-group-prepend {
@@ -31,4 +38,32 @@
   .form-control {
     border-right: 0 !important;
     border-left: 0 !important
+  }
+  .highlight{
+    font-weight: bold;
+  }
+  .bg{
+    background:#202124ca;
+  }
+  .recording {
+    animation-name: fade;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+    animation-duration: 1s;
+    animation-direction: alternate;
+  }
+  
+  @keyframes fade {
+    0% {
+      opacity: 1;
+    }
+    25% {
+      opacity: 1;
+    }
+    75% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
   }

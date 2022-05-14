@@ -27,7 +27,8 @@ public class dbManager implements IdbManager {
     public static boolean finishedCrawling = false;
 
     public dbManager() {
-        MongoClient mongoClient = MongoClients.create("mongodb://admin:pass@mongo-dev.demosfortest.com:27017/");
+//      MongoClient mongoClient = MongoClients.create("mongodb://admin:pass@mongo-dev.demosfortest.com:27017/");
+      MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         PageSaver = database.getCollection("PageSaver");
         Crawler = database.getCollection("Crawler");

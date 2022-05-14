@@ -1,15 +1,19 @@
-import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Router, ActivatedRoute, ParamMap } from '@angular/router';
-import {
-  faCaretRight,
-  faCaretLeft,
-  faMicrophone,
-} from '@fortawesome/free-solid-svg-icons';
+import { Component, OnInit, NgZone } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { faCaretRight, faCaretLeft } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { map, Observable, startWith } from 'rxjs';
-import { FindService } from '../find.service';
-import { QueriesService } from '../queries.service';
+import { FindService } from '../services/find.service';
+import { QueriesService } from '../services/queries.service';
+import {
+  defaultFindChunks,
+  defaultSanitize,
+  findAll,
+} from '../utils/ngx-highlight-words.utils';
+import { Chunk } from '../utils/ngx-highlight-words.utils';
+import { ThemePalette } from '@angular/material/core';
+
+declare const annyang: any;
 
 @Component({
   selector: 'app-results',
@@ -17,13 +21,17 @@ import { QueriesService } from '../queries.service';
   styleUrls: ['./results.component.scss'],
 })
 export class ResultsComponent implements OnInit {
+  loading = true;
+  color: ThemePalette = 'warn';
+  resultsCount = 0;
+  resultstime = 0;
   constructor(
-    private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder,
-    private findService : FindService,
-    private queriesService : QueriesService
+    private findService: FindService,
+    private queriesService: QueriesService,
+    private ngZone: NgZone
   ) {}
   // font awsome
   faCaretRight = faCaretRight;
@@ -48,8 +56,7 @@ export class ResultsComponent implements OnInit {
   //Functions
 
   search(): void {
-    // console.log(this.q);
-    if (!this.q?.value.trim()) return;
+    if (!this.q.value || !this.q?.value.trim()) return;
     this.router.routeReuseStrategy.shouldReuseRoute = () => false;
     this.router.onSameUrlNavigation = 'reload';
     this.router.navigate(['/result', { q: this.q.value }]);
@@ -62,11 +69,18 @@ export class ResultsComponent implements OnInit {
       this.router.navigate(['/search']);
     }
     this.query = q;
+    this.searchWords = this.query?.split(/[ ,]+/) as string[];
     this.findService.Find(q).subscribe((data) => {
       this.results = data as any;
       this.pages = Math.ceil(this.results.length / 10.0);
       this.pageNumbers = Array.from(Array(this.pages).keys());
-      // console.log(this.results);
+      this.loading = false;
+      //ugly code
+      this.findService.stats().subscribe((data) => {
+        this.resultstime = data.time;
+        this.resultsCount = data.results;
+        console.log(data);
+      });
     });
     this.queriesService.Queries().subscribe((data) => {
       this.options = data as string[];
@@ -74,8 +88,8 @@ export class ResultsComponent implements OnInit {
         startWith(''),
         map((value) => this._filter(value))
       );
-      console.log(data);
     });
+    this.q.setValue(this.query);
   }
   nextPage() {
     if (this.pages < this.page) return;
@@ -94,42 +108,127 @@ export class ResultsComponent implements OnInit {
     }
   }
   setPage(page: number) {
-    this.page = page;
-    // if (this.page < this.pages - 5 && this.page > 5) {
-    //   this.backBuffer = page - 5;
-    //   this.nextBuffer = page + 5;
-    // } else if (this.page < this.pages - 5) {
-    //   this.backBuffer = this.pages - 10;
-    //   this.nextBuffer = this.pages;
-    // } else if(this.page > 5) {
-    //   this.backBuffer = 0;
-    //   this.nextBuffer = 10;
-    // }
-  }
-  public highlight(i: number) {
-    let words = this.query?.split(/[ ,]+/);
-    if (this.query) {
-    console.log(words);
-      for (let index = 0; index < words!.length; index++) {
-        this.results[i].p = this.results[i].p.replace(
-          new RegExp(words![index], 'gi'),
-          (match: string) => {
-            return '<b>' + match + '</b>';
-          }
-        );
+    // another ugly code
+    var diffrence = page - this.page;
+    if (diffrence > 0)
+      for (let index = 0; index < diffrence; index++) {
+        this.nextPage();
       }
-      return this.results[i].p;
-    }
+    else
+      for (let index = 0; index < -diffrence; index++) {
+        this.prevPage();
+      }
   }
-
   private _filter(value: string): string[] {
     const filterValue = this._normalizeValue(value);
     return this.options.filter((option) =>
       this._normalizeValue(option).includes(filterValue)
     );
   }
-
   private _normalizeValue(value: string): string {
     return value.toLowerCase().replace(/\s/g, '');
+  }
+
+  //! disclaimer I don't own the rights to claim any work related to "ngx-highlight-words.utils"
+  //! library was incombatble with anguler 13 so I had to copy necessary parts from it
+  textToHighlight: string = '';
+  searchWords: string[] = [];
+  highlightClassName = 'highlight';
+  autoEscape = true;
+  caseSensitive = false;
+  findChunks = defaultFindChunks;
+  sanitize = defaultSanitize;
+
+  chunks(index: number): Chunk[] {
+    this.textToHighlight = this.results[index].p.slice(0, 320);
+    return findAll({
+      textToHighlight: this.textToHighlight,
+      searchWords: this.searchWords,
+      autoEscape: this.autoEscape,
+      caseSensitive: this.caseSensitive,
+      findChunks: this.findChunks,
+      sanitize: this.sanitize,
+    });
+  }
+  // ============================== voice search section ==============================
+  voiceActiveSectionDisabled: boolean = true;
+  voiceActiveSectionError: boolean = false;
+  voiceActiveSectionSuccess: boolean = false;
+  voiceActiveSectionListening: boolean = false;
+  voiceText: any;
+  initializeVoiceRecognitionCallback(): void {
+    annyang.addCallback('error', (err: any) => {
+      if (err.error === 'network') {
+        this.voiceText = 'Internet is require';
+        annyang.abort();
+        this.ngZone.run(() => (this.voiceActiveSectionSuccess = true));
+      } else if (this.voiceText === undefined) {
+        this.ngZone.run(() => (this.voiceActiveSectionError = true));
+        annyang.abort();
+      }
+    });
+
+    annyang.addCallback('soundstart', (res: any) => {
+      this.ngZone.run(() => (this.voiceActiveSectionListening = true));
+    });
+
+    annyang.addCallback('end', () => {
+      if (this.voiceText === undefined) {
+        this.ngZone.run(() => (this.voiceActiveSectionError = true));
+        annyang.abort();
+      }
+    });
+
+    annyang.addCallback('result', (userSaid: any) => {
+      this.ngZone.run(() => (this.voiceActiveSectionError = false));
+
+      let queryText: any = userSaid[0];
+
+      annyang.abort();
+
+      this.voiceText = queryText;
+
+      this.ngZone.run(() => (this.voiceActiveSectionListening = false));
+      this.ngZone.run(() => (this.voiceActiveSectionSuccess = true));
+      console.log(queryText);
+      this.q.setValue(queryText);
+      this.voiceRecognitionOn = false;
+    });
+  }
+
+  startVoiceRecognition(): void {
+    this.voiceActiveSectionDisabled = false;
+    this.voiceActiveSectionError = false;
+    this.voiceActiveSectionSuccess = false;
+    this.voiceText = undefined;
+    this.voiceRecognitionOn = true;
+    if (annyang) {
+      let commands = {
+        'demo-annyang': () => {},
+      };
+
+      annyang.addCommands(commands);
+
+      this.initializeVoiceRecognitionCallback();
+
+      annyang.start({ autoRestart: false });
+    }
+  }
+  closeVoiceRecognition(): void {
+    this.voiceActiveSectionDisabled = true;
+    this.voiceActiveSectionError = false;
+    this.voiceActiveSectionSuccess = false;
+    this.voiceActiveSectionListening = false;
+    this.voiceText = undefined;
+    this.voiceRecognitionOn = false;
+    if (annyang) {
+      annyang.abort();
+    }
+  }
+
+  voiceRecognitionOn = false;
+  voiceRecognition() {
+    if (this.voiceRecognitionOn) this.closeVoiceRecognition();
+    else this.startVoiceRecognition();
   }
 }

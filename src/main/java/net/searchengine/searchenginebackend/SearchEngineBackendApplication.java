@@ -34,8 +34,10 @@ public class SearchEngineBackendApplication {
     protected MongoCollection<Document> Queries;
     private IdbManager Manager;
     private QueryProcessor processor;
+    double time = 0;
+    long results = 0;
     public SearchEngineBackendApplication() {
-        MongoClient mongoClient = MongoClients.create("mongodb://admin:pass@mongo-dev.demosfortest.com:27017/");
+        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         Crawler = database.getCollection("Crawler");
         Queries = database.getCollection("Queries");
@@ -61,12 +63,22 @@ public class SearchEngineBackendApplication {
     }
 
     @CrossOrigin("http://localhost:4200")
-    @GetMapping("/api/GoFind/{s}")
-    public List<Document> test(@PathVariable String s) {
+    @GetMapping("/api/grep/{s}")
+    public List<Document> grep(@PathVariable String s) {
         //TODO refactor this to dbManager
         Queries.updateOne(new Document(),Updates.addToSet("q",s.toLowerCase()),new UpdateOptions().upsert(true));
+        time = 1.2;
+        results = 100;
         return processor.rankQuery(s);
     }
+
+    @CrossOrigin("http://localhost:4200")
+    @GetMapping("/api/stats")
+    public Document timeElapsed() {
+        Document doc = new Document().append("time",time).append("results",results);
+        return doc;
+    }
+
     //hopefully no one finds this code
     @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/prevQueries")

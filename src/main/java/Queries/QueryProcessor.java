@@ -54,11 +54,15 @@ public class QueryProcessor {
         for (var doc:RankedPages) {
             searchResult.add(doc.toJSON());
         }
+        System.out.println("No of results: " + RankedPages.size());
         return searchResult;
     }
 
     public static void main(String[] args) {
+
         QueryProcessor magic = new QueryProcessor(new dbManager());
-        magic.rankQuery("free wikipedia help us");
+        long start = System.currentTimeMillis();
+        magic.rankQuery("codeforces contest div 1 2 3 4 5 6");
+        System.out.println("Took " + (System.currentTimeMillis() - start) + "ms to run!");
     }
 }
