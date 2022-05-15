@@ -19,14 +19,19 @@ public class PageIndexer {
 
 
     public void indexPage(HTMLPage page) {
+        long start = System.currentTimeMillis();
         htmlParser.setPage(page);
         page = htmlParser.parse();
+        System.out.println("\n\n\nFinished parsing, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
+        start = System.currentTimeMillis();
         for(HTMLPage.Word word : page.words) {
             manager.insertOccurrence(page.url, word.stemmedWord, word.tag, word.position, page.wordCount, page.title, page.crcHash, word.exactWord, word.paragraph);
         }
-
+        System.out.println("\n\n\nFinished inserting occurrences, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
         manager.updateIndexStatus(page.crcHash, true);
+        start = System.currentTimeMillis();
         manager.bulkWriteIndexer();
+        System.out.println("\n\n\nFinished bulk insertion, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
     }
 
     public void indexAll() {
@@ -49,7 +54,10 @@ public class PageIndexer {
                 return;
             }
 
+            System.out.println("Started indexing " + hash + " url: " + url);
+            long start = System.currentTimeMillis();
             indexPage(page);
+            System.out.println("\n\n\nTook " + (System.currentTimeMillis() - start) + "ms!\n\n\n");
         }
     }
 

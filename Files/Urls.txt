@@ -2064,3 +2064,6 @@ https://codeforces.com/profile/_vanilla_
 https://codeforces.com/blog/entry/102710
 https://codeforces.com/blog/entry/102641#comments
 https://codeforces.com/blog/entry/102573
+https://codeforces.com/blog/entry/102710
+https://codeforces.com/blog/entry/102573
+https://codeforces.com/blog/entry/8790

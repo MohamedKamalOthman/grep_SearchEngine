@@ -21,6 +21,7 @@ public class DBManager {
     protected MongoCollection<Document> SearchIndex;
     protected MongoCollection<Document> Popularity;
     protected MongoCollection<Document> Testing;
+    protected MongoCollection<Document> Paragraphs;
     protected static List indexerBulkWrite = new ArrayList();
 
     public static boolean finishedCrawling = false;
@@ -30,11 +31,12 @@ public class DBManager {
       MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         PageSaver = database.getCollection("PageSaver");
-        Crawler = database.getCollection("Crawler");
+        Crawler = database.getCollection("crawler");
         SearchIndex = database.getCollection("SearchIndex");
         Popularity = database.getCollection("Popularity");
         MongoDatabase database1 = mongoClient.getDatabase("test");
         Testing = database1.getCollection("testing");
+        Paragraphs = database.getCollection("Paragraphs");
     }
 
     //crawler first run
@@ -328,7 +330,7 @@ public class DBManager {
 
     public void bulkWriteIndexer() {
         try {
-            SearchIndex.bulkWrite(indexerBulkWrite);
+            SearchIndex.bulkWrite(indexerBulkWrite, new BulkWriteOptions().ordered(false));
         } catch (Exception me) {
             System.err.println("Unable to update due to an error: " + me);
         }

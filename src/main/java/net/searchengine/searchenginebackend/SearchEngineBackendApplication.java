@@ -31,7 +31,7 @@ public class SearchEngineBackendApplication {
     public SearchEngineBackendApplication() {
         MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
-        Crawler = database.getCollection("Crawler");
+        Crawler = database.getCollection("crawler");
         Queries = database.getCollection("queries");
         Manager = new DBManager();
         processor = new QueryProcessor(Manager);
