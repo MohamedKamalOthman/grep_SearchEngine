@@ -1,27 +1,25 @@
-package Ranker;
+package ranker;
 
-import Database.IdbManager;
-import Database.dbManager;
-import Indexer.PageIndexer;
+import database.DBManager;
 import org.bson.Document;
+import utilities.HTMLParserUtilities;
+import utilities.Stemmer;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static Indexer.HTMLParserUtilities.TagImportanceMap;
-
 public class PageRanker {
-    private final IdbManager Manager;
+    private final DBManager Manager;
     private final HashMap<String,Number> popularityMap;
-    public PageRanker(IdbManager manager) {
+    public PageRanker(DBManager manager) {
         this.Manager = manager;
         popularityMap = Manager.getPopularity();
     }
 
     public ArrayList<RankerResult> GetSingleWordResults(String word){
-        String stemmed_word = PageIndexer.stemWord(word);
+        String stemmed_word = Stemmer.stemWord(word);
         if(stemmed_word == null)
             return null;
         Document doc = Manager.getWordDocument(stemmed_word);
@@ -56,7 +54,7 @@ public class PageRanker {
             Document total_counts = (Document) occurrence.get("total_count");
             for(String k : total_counts.keySet())
             {
-                int importance = TagImportanceMap.get(k);
+                int importance = HTMLParserUtilities.getTagImportance(k);
                 int count = (int) total_counts.get(k);
                 // Update Rank According To Tag In Which The Word is Present
                 result.rank *= (double)importance * ((double) count / (double) term_frequency);
@@ -88,7 +86,7 @@ public class PageRanker {
     }
 
     public static void main(String[] args) {
-        dbManager db = new dbManager();
+        DBManager db = new DBManager();
         PageRanker pageRanker = new PageRanker(db);
         var result = pageRanker.GetSingleWordResults("page");
         result.sort(((o1, o2) -> {

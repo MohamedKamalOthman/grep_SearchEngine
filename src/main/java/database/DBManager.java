@@ -1,22 +1,21 @@
-package Database;
+package database;
 
 import com.mongodb.*;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.*;
 import com.mongodb.client.result.UpdateResult;
+import crawler.HostInformation;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.all;
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Projections.include;
 
-public class dbManager implements IdbManager {
+public class DBManager {
     protected MongoCollection<Document> PageSaver;
     protected MongoCollection<Document> Crawler;
     protected MongoCollection<Document> SearchIndex;
@@ -26,7 +25,7 @@ public class dbManager implements IdbManager {
 
     public static boolean finishedCrawling = false;
 
-    public dbManager() {
+    public DBManager() {
 //      MongoClient mongoClient = MongoClients.create("mongodb://admin:pass@mongo-dev.demosfortest.com:27017/");
       MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
@@ -95,10 +94,11 @@ public class dbManager implements IdbManager {
         }
     }
 
-    public boolean saveUrls(ArrayList<String> urls) {
+    public BulkWriteResult saveUrls(Iterable<String> urls) {
         if(finishedCrawling)
-            return false;
-        List crawlerBulkWrite = new ArrayList();
+            return null;
+
+        List<UpdateOneModel<Document>> crawlerBulkWrite = new ArrayList<>();
 
         for (String url : urls) {
             Document query = new Document().append("url", url);
@@ -106,21 +106,21 @@ public class dbManager implements IdbManager {
                     Updates.setOnInsert("crawled", 0)
             );
             UpdateOptions options = new UpdateOptions().upsert(true);
-            crawlerBulkWrite.add(new UpdateOneModel(query, updates, options));
+            crawlerBulkWrite.add(new UpdateOneModel<>(query, updates, options));
         }
         if(!crawlerBulkWrite.isEmpty())
-        try {
-            var result = Crawler.bulkWrite(crawlerBulkWrite);
-            long count = Crawler.countDocuments();
-            if (count >= 5100) {
-                finishedCrawling = true;
+            try {
+                var result = Crawler.bulkWrite(crawlerBulkWrite);
+                long count = Crawler.countDocuments();
+                if (count >= 300) {
+                    finishedCrawling = true;
+                }
+                return result;
+            } catch (MongoException me) {
+                System.err.println("Unable to update due to an error: " + me);
+                return null;
             }
-            return result.getInsertedCount() != 0;
-        } catch (MongoException me) {
-            System.err.println("Unable to update due to an error: " + me);
-            return false;
-        }
-        return false;
+        return null;
     }
 
     public boolean isFinishedCrawling() {
@@ -239,12 +239,14 @@ public class dbManager implements IdbManager {
         }
     }
 
-    public boolean incrementHosts(HashMap<String, Integer> hosts) {
+    public boolean incrementHosts(Map<String, HostInformation> hosts) {
         List popularityBulkWrtie = new ArrayList();
         for (String host : hosts.keySet()) {
             Document query = new Document().append("host", host);
             Bson updates = Updates.combine(
-                    Updates.inc("refCount", hosts.get(host))
+                    Updates.inc("fetchedCount", hosts.get(host).fetchedCount),
+                    Updates.setOnInsert("crawledCount", 0),
+                    Updates.inc("refCount", hosts.get(host).refCount)
             );
             UpdateOptions options = new UpdateOptions().upsert(true);
             popularityBulkWrtie.add(new UpdateOneModel(query, updates, options));
@@ -381,7 +383,7 @@ public class dbManager implements IdbManager {
 
     //for testing only!
     public static void main(String[] args) {
-        dbManager d = new dbManager();
+        DBManager d = new DBManager();
 //        d.insertOccurrence("https://www.stackoverflowss.com","programmings","header",1,-2561, "programming","paragraph");
 //        d.insertOccurrence("https://www.stackoverflow.com","programmings","header",5,-236, "programming","paragraph");
 //        d.insertOccurrence("https://www.stackoverflowe.com","programmings","header",78,-86, "programming","paragraph");

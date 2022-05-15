@@ -1,17 +1,12 @@
 package net.searchengine.searchenginebackend;
 
-import Database.IdbManager;
-import Database.dbManager;
-import Queries.QueryProcessor;
+
+import database.DBManager;
+import queries.QueryProcessor;
 import com.mongodb.client.*;
-import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
-import org.apache.catalina.Manager;
 import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -20,19 +15,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.swing.text.html.HTML;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RestController
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class SearchEngineBackendApplication {
     protected MongoCollection<Document> Crawler;
     protected MongoCollection<Document> Queries;
-    private IdbManager Manager;
+    private DBManager Manager;
     private QueryProcessor processor;
     double time = 0;
     long results = 0;
@@ -40,8 +32,8 @@ public class SearchEngineBackendApplication {
         MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         Crawler = database.getCollection("Crawler");
-        Queries = database.getCollection("Queries");
-        Manager = new dbManager();
+        Queries = database.getCollection("queries");
+        Manager = new DBManager();
         processor = new QueryProcessor(Manager);
     }
 

@@ -1,4 +1,4 @@
-package Pages;
+package pages;
 
 public interface IUrlListHandler {
     void add(String Url);

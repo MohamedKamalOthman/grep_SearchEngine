@@ -1,23 +1,19 @@
-package Queries;
+package queries;
 
-import Database.IdbManager;
-import Database.dbManager;
-import Ranker.PageRanker;
-import Ranker.RankerResult;
-import com.sun.jdi.PathSearchingVirtualMachine;
+
+import database.DBManager;
+import ranker.PageRanker;
+import ranker.RankerResult;
 import org.bson.Document;
-import org.springframework.data.domain.Page;
 
-import javax.xml.transform.Result;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 public class QueryProcessor {
     private String[] Query;
     private final PageRanker ranker;
-    public QueryProcessor(IdbManager Manager) {
+    public QueryProcessor(DBManager Manager) {
         ranker = new PageRanker(Manager);
     }
 
@@ -60,7 +56,7 @@ public class QueryProcessor {
 
     public static void main(String[] args) {
 
-        QueryProcessor magic = new QueryProcessor(new dbManager());
+        QueryProcessor magic = new QueryProcessor(new DBManager());
         long start = System.currentTimeMillis();
         magic.rankQuery("codeforces contest div 1 2 3 4 5 6");
         System.out.println("Took " + (System.currentTimeMillis() - start) + "ms to run!");

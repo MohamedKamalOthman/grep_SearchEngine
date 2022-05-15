@@ -1,14 +1,14 @@
-package Indexer;
+package indexer;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
+import utilities.HTMLParserUtilities;
+import utilities.Stemmer;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-
-import static Indexer.PageIndexer.stemWord;
 
 public class HTMLParser {
     private HTMLPage page;
@@ -17,16 +17,18 @@ public class HTMLParser {
         page = null;
     }
 
-    HTMLParser(Document JSOUPDocument, String Url, long hash) {
-        page = new HTMLPage(JSOUPDocument, Url, hash);
+    HTMLParser(Document jsoupDocument, String url, long hash) {
+        page = new HTMLPage(jsoupDocument, url, hash);
     }
 
-    public void setPage(Document JSOUPDocument, String Url, long hash) {
-        page = new HTMLPage(JSOUPDocument, Url, hash);
+    public void setPage(Document jsoupDocument, String url, long hash) {
+        page = new HTMLPage(jsoupDocument, url, hash);
     }
-    public void setPage(HTMLPage Page) {
-        page = Page;
+
+    public void setPage(HTMLPage htmlPage) {
+        page = htmlPage;
     }
+
     /**
      * parses current html webpage into indexed stemmed words.
      * @return parsed webpage.
@@ -43,7 +45,7 @@ public class HTMLParser {
      */
     private void parseTitle() {
         var titles = page.doc.head().select("title");
-        if(titles.size() > 0) {
+        if(!titles.isEmpty()) {
             try {
                 page.title = titles.first().ownText().strip();
             }
@@ -68,17 +70,17 @@ public class HTMLParser {
      * Parse html webpage body.
      * Recursively parses each element in webpage.
      * @param n Current node to parse
-     * @param ParentTag Best parent tag based on importance
+     * @param parentTag Best parent tag based on importance
      */
-    private void parseBody(Node n, String ParentTag) {
+    private void parseBody(Node n, String parentTag) {
         if (n instanceof TextNode tn) {
-            parseTextNode(tn, ParentTag);
+            parseTextNode(tn, parentTag);
             return;
         }
 
         if (n instanceof Element e) {
-            String tag = upgradeTag(e.tagName(), ParentTag);
-            if(HTMLParserUtilities.TagImportanceMap.getOrDefault(tag, 0) >= HTMLParserUtilities.THRESHOLD) {
+            String tag = upgradeTag(e.tagName(), parentTag);
+            if(HTMLParserUtilities.isParagraphTag(tag)) {
                 parseTextElement(n, tag);
                 return;
             }
@@ -89,57 +91,55 @@ public class HTMLParser {
         }
     }
 
-    private void parseTextElement(Node e, String ParentTag) {
-        String paragraph = HTMLParserUtilities.BuildStringFromNode(e);
-        extractText(ParentTag, paragraph);
+    private void parseTextElement(Node e, String parentTag) {
+        String paragraph = HTMLParserUtilities.buildStringFromNode(e);
+        extractText(parentTag, paragraph);
     }
 
-    private void parseTextNode(TextNode tn, String ParentTag) {
+    private void parseTextNode(TextNode tn, String parentTag) {
         String paragraph = tn.text().strip();
-        extractText(ParentTag, paragraph);
+        extractText(parentTag, paragraph);
     }
 
     /**
      * Extracts all words from paragraph and adds to them to the word list of the webpage.
-     * @param ParentTag Parent tag of words in this paragraph.
+     * @param parentTag Parent tag of words in this paragraph.
      * @param paragraph Paragraph text.
      */
-    private void extractText(String ParentTag, String paragraph) {
+    private void extractText(String parentTag, String paragraph) {
         String text = paragraph.replaceAll("\\p{Punct}", " ");
         if(text.isBlank())
             return;
 
         String[] split = text.split("\\s+");
-        if(HTMLParserUtilities.TagImportanceMap.getOrDefault(ParentTag, 0) < 4 && split.length <= 9) {
+        if(HTMLParserUtilities.getTagImportance(parentTag) < 4 && split.length <= 9) {
             page.wordCount += split.length;
             return;
         }
 
         for (String exactWord : split) {
             exactWord = exactWord.toLowerCase();
-            String stemmed = stemWord(exactWord);
+            String stemmed = Stemmer.stemWord(exactWord);
             if (stemmed == null || stemmed.isBlank()) {
                 page.wordCount++;
                 continue;
             }
 
-            var word = new HTMLPage.Word(exactWord, stemmed, page.wordCount++, ParentTag, paragraph);
+            var word = new HTMLPage.Word(exactWord, stemmed, page.wordCount++, parentTag, paragraph);
             page.words.add(word);
         }
     }
 
     /**
      * Compares and chooses which tag is more important. Favors current tag in case of a tie.
-     * @param Tag Current tag.
-     * @param ParentTag Parent Tag.
+     * @param tag Current tag.
+     * @param parentTag Parent Tag.
      * @return Best tag.
      */
-    private static String upgradeTag(String Tag, String ParentTag) {
-        int CurrentTagImportance = HTMLParserUtilities.TagImportanceMap.getOrDefault(Tag, -1);
-        int ParentTagImportance = HTMLParserUtilities.TagImportanceMap.getOrDefault(ParentTag, -1);
-        if(ParentTagImportance > CurrentTagImportance)
-            return ParentTag;
-        else
-            return Tag;
+    private static String upgradeTag(String tag, String parentTag) {
+        if(HTMLParserUtilities.getTagImportance(parentTag) > HTMLParserUtilities.getTagImportance(tag))
+            return parentTag;
+
+        return tag;
     }
 }

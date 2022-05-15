@@ -1,4 +1,4 @@
-package Ranker;
+package ranker;
 
 import org.bson.Document;
 
@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 public class RankerResult {
     public String url;
+    public long hash;
     public ArrayList<ParagraphData> paragraphs;
     public ArrayList<ParagraphData> topParagraphs;
     public double rank;
@@ -13,7 +14,7 @@ public class RankerResult {
 
     @Override
     public String toString(){
-        String result =  "URL = " + url + "\n" +
+        String result =  "URL = " + url + " HASH = " + hash + "\n" +
                 "With Rank = " + rank + "\n" +
                 "Top Paragraphs : \n";
         for(var p : topParagraphs)

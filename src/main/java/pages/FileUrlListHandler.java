@@ -1,6 +1,4 @@
-package Pages;
-
-import Database.IdbManager;
+package pages;
 
 import java.io.File;
 import java.io.FileWriter;

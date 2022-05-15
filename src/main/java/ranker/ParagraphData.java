@@ -1,4 +1,4 @@
-package Ranker;
+package ranker;
 
 public class ParagraphData {
     public long location;
