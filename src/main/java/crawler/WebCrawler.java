@@ -9,8 +9,6 @@ import utilities.RobotsTxtUtilities;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
 
 public class WebCrawler implements Runnable {

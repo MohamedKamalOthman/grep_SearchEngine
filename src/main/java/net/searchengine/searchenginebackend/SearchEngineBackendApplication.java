@@ -22,43 +22,41 @@ import java.util.List;
 @RestController
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 public class SearchEngineBackendApplication {
-    protected MongoCollection<Document> Crawler;
-    protected MongoCollection<Document> Queries;
-    private DBManager Manager;
-    private QueryProcessor processor;
+    protected MongoCollection<Document> crawler;
+    protected MongoCollection<Document> queries;
+    private final DBManager manager;
+    private final QueryProcessor processor;
     double time = 0;
     long results = 0;
     public SearchEngineBackendApplication() {
         MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
-        Crawler = database.getCollection("crawler");
-        Queries = database.getCollection("queries");
-        Manager = new DBManager();
-        processor = new QueryProcessor(Manager);
+        crawler = database.getCollection("crawler");
+        queries = database.getCollection("queries");
+        manager = new DBManager();
+        processor = new QueryProcessor(manager);
     }
 
     @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/find/{s}")
     public List<Document> find(@PathVariable int s) {
         Document query = new Document().append("crawled", s);
-        MongoCursor<Document> cursor = Crawler.find(query).cursor();
         List<Document> docs = new ArrayList<>();
-        try {
+        try(MongoCursor<Document> cursor = crawler.find(query).cursor()) {
             while (cursor.hasNext()) {
                 docs.add(cursor.next());
                 System.out.println(docs);
             }
-        } finally {
-            cursor.close();
-            return docs;
         }
+
+        return docs;
     }
 
     @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/grep/{s}")
     public List<Document> grep(@PathVariable String s) {
         //TODO refactor this to dbManager
-        Queries.updateOne(new Document(),Updates.addToSet("q",s.toLowerCase()),new UpdateOptions().upsert(true));
+        queries.updateOne(new Document(),Updates.addToSet("q",s.toLowerCase()),new UpdateOptions().upsert(true));
         time = 1.2;
         results = 100;
         return processor.rankQuery(s);
@@ -67,8 +65,7 @@ public class SearchEngineBackendApplication {
     @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/stats")
     public Document timeElapsed() {
-        Document doc = new Document().append("time",time).append("results",results);
-        return doc;
+        return new Document().append("time",time).append("results",results);
     }
 
     //hopefully no one finds this code
@@ -76,7 +73,7 @@ public class SearchEngineBackendApplication {
     @GetMapping("/api/prevQueries")
     public List<String> prevQueries(){
         //TODO refactor this to dbManager
-        var l = (List<String>)Queries.find(new Document()).first().get("q");
+        var l = (List<String>) queries.find(new Document()).first().get("q");
         Collections.reverse(l);
         return  l;
     }

@@ -19,7 +19,6 @@ public class WebCrawlerState {
     private final DBManager manager;
 
     private final ArrayList<String> finishedCrawlingUrls = new ArrayList<>();
-    private final HashMap<String, Integer> hosts = new HashMap<>();
     private final List<FetchedUrl> fetchedUrls = new ArrayList<>();
 
     public static boolean finished = false;

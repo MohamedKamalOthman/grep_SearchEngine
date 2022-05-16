@@ -19,11 +19,9 @@ public class PageIndexer {
 
 
     public void indexPage(HTMLPage page) {
-        long start = System.currentTimeMillis();
         htmlParser.setPage(page);
         page = htmlParser.parse();
-        System.out.println("\n\n\nFinished parsing, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
-        start = System.currentTimeMillis();
+
         for(HTMLPage.Word word : page.words) {
             long paragraphHash = page.crcHash;
             paragraphHash += (word.paragraphID << 32);
@@ -37,12 +35,10 @@ public class PageIndexer {
             ++i;
             manager.insertParagraph(paragraph, paragraphHash);
         }
-        System.out.println("\n\n\nFinished inserting occurrences, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
+
         manager.updateIndexStatus(page.crcHash, true);
-        start = System.currentTimeMillis();
         manager.bulkWriteIndexer();
         manager.bulkWriteParagraphs();
-        System.out.println("\n\n\nFinished bulk insertion, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
     }
 
     public void indexAll() {
@@ -65,10 +61,7 @@ public class PageIndexer {
                 return;
             }
 
-            System.out.println("Started indexing " + hash + " url: " + url);
-            long start = System.currentTimeMillis();
             indexPage(page);
-            System.out.println("\n\n\nTook " + (System.currentTimeMillis() - start) + "ms!\n\n\n");
         }
     }
 

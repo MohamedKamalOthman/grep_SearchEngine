@@ -56,7 +56,7 @@ public class ConcurrentHTMLPageSaver implements Runnable, IHtmlPageSaver {
             }
             catch (InterruptedException ie) {
                 thread.interrupt();
-                break;
+                return;
             }
 
             htmlPageSaver.save(currentTask.wDoc, currentTask.url);

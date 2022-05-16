@@ -17,7 +17,7 @@ public class DocumentWrapper {
     DocumentWrapper(Document document) {
         doc = document;
         if (doc == null) {
-            html = null;
+            html = "";
             crc = 0;
             return;
         }
