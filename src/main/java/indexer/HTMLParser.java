@@ -31,6 +31,7 @@ public class HTMLParser {
 
     public void setPage(HTMLPage htmlPage) {
         page = htmlPage;
+        paragraphCount = 0;
     }
 
     /**
