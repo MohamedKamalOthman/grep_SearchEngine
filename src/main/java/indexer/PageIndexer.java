@@ -25,12 +25,23 @@ public class PageIndexer {
         System.out.println("\n\n\nFinished parsing, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
         start = System.currentTimeMillis();
         for(HTMLPage.Word word : page.words) {
-            manager.insertOccurrence(page.url, word.stemmedWord, word.tag, word.position, page.wordCount, page.title, page.crcHash, word.exactWord, word.paragraph);
+            long paragraphHash = page.crcHash;
+            paragraphHash += (word.paragraphID << 32);
+            manager.insertOccurrence(page.url, word.stemmedWord, word.tag, word.position, page.wordCount, page.title, page.crcHash, word.exactWord, paragraphHash);
+        }
+
+        long i = 1;
+        for(String paragraph : page.paragraphs) {
+            long paragraphHash = page.crcHash;
+            paragraphHash += (i << 32);
+            ++i;
+            manager.insertParagraph(paragraph, paragraphHash);
         }
         System.out.println("\n\n\nFinished inserting occurrences, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
         manager.updateIndexStatus(page.crcHash, true);
         start = System.currentTimeMillis();
         manager.bulkWriteIndexer();
+        manager.bulkWriteParagraphs();
         System.out.println("\n\n\nFinished bulk insertion, took " + (System.currentTimeMillis() - start) + "ms\n\n\n");
     }
 

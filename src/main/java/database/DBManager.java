@@ -23,6 +23,7 @@ public class DBManager {
     protected MongoCollection<Document> Testing;
     protected MongoCollection<Document> Paragraphs;
     protected static List indexerBulkWrite = new ArrayList();
+    protected static List paragraphBulkWrite = new ArrayList();
 
     public static boolean finishedCrawling = false;
 
@@ -264,11 +265,16 @@ public class DBManager {
         return false;
     }
 
-    public void insertOccurrence(String url, String value, String text_type, long location, long length, String title,long hash, String exactWord, String paragraph) {
+    public void insertParagraph(String paragraph, long paragraphHash) {
+        Document query = new Document().append("paragraph", paragraph).append("hash", paragraphHash);
+        paragraphBulkWrite.add(new InsertOneModel(query));
+    }
+
+    public void insertOccurrence(String url, String value, String text_type, long location, long length, String title,long hash, String exactWord, long paragraphHash) {
         Document query = new Document().append("value", value);
 //        query.append("occurrences.url",url);
 //        Updates.
-        Document place = new Document().append("location", location).append("text_type", text_type).append("exactWord", exactWord).append("paragraph", paragraph);
+        Document place = new Document().append("location", location).append("text_type", text_type).append("exactWord", exactWord).append("paragraph", paragraphHash);
 //        Document.parse("{\"location\":" + location + ",\"text_type\":\"" + text_type + "\",\"exactWord\":\"" + exactWord + "\",\"paragraph\":\"" + paragraph + "\"}")
         Bson updates = Updates.combine(
 //              Updates.setOnInsert();
@@ -337,6 +343,14 @@ public class DBManager {
         indexerBulkWrite.clear();
     }
 
+    public void bulkWriteParagraphs() {
+        try {
+            Paragraphs.bulkWrite(paragraphBulkWrite, new BulkWriteOptions().ordered(false));
+        } catch (Exception me) {
+            System.err.println("Unable to insert due to an error: " + me);
+        }
+        paragraphBulkWrite.clear();
+    }
     public Document getWordDocument(String word){
         return SearchIndex.find(new Document().append("value",word)).first();
     }

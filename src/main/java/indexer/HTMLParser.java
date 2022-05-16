@@ -12,17 +12,21 @@ import java.net.URL;
 
 public class HTMLParser {
     private HTMLPage page;
+    private long paragraphCount;
 
     HTMLParser() {
         page = null;
+        paragraphCount = 0;
     }
 
     HTMLParser(Document jsoupDocument, String url, long hash) {
         page = new HTMLPage(jsoupDocument, url, hash);
+        paragraphCount = 0;
     }
 
     public void setPage(Document jsoupDocument, String url, long hash) {
         page = new HTMLPage(jsoupDocument, url, hash);
+        paragraphCount = 0;
     }
 
     public void setPage(HTMLPage htmlPage) {
@@ -116,6 +120,8 @@ public class HTMLParser {
             page.wordCount += split.length;
             return;
         }
+        page.paragraphs.add(paragraph);
+        ++paragraphCount;
 
         for (String exactWord : split) {
             exactWord = exactWord.toLowerCase();
@@ -125,7 +131,7 @@ public class HTMLParser {
                 continue;
             }
 
-            var word = new HTMLPage.Word(exactWord, stemmed, page.wordCount++, parentTag, paragraph);
+            var word = new HTMLPage.Word(exactWord, stemmed, page.wordCount++, parentTag, paragraphCount);
             page.words.add(word);
         }
     }

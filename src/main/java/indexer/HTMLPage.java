@@ -11,6 +11,7 @@ public class HTMLPage {
     public final String url;
     public String title;
     public final List<Word> words = new ArrayList<>();
+    public final List<String> paragraphs = new ArrayList<>();
     long wordCount = 0;
     long crcHash;
 
@@ -20,14 +21,14 @@ public class HTMLPage {
         public final String stemmedWord;
         public final long position;
         public final String tag;
-        public final String paragraph;
+        public final long paragraphID;
 
-        public Word(String exactWord, String stemmedWord, long position, String tag, String paragraph) {
+        public Word(String exactWord, String stemmedWord, long position, String tag, long paragraphID) {
             this.exactWord = exactWord;
             this.stemmedWord = stemmedWord;
             this.position = position;
             this.tag = tag;
-            this.paragraph = paragraph;
+            this.paragraphID = paragraphID;
         }
 
 
@@ -38,7 +39,7 @@ public class HTMLPage {
                     ", stemmedWord='" + stemmedWord + '\'' +
                     ", position=" + position +
                     ", tag='" + tag + '\'' +
-                    "}\nparagraph='" + paragraph + '\'';
+                    "}\nparagraphID='" + paragraphID + '\'';
         }
     }
 

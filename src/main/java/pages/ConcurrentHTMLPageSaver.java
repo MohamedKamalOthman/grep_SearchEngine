@@ -32,8 +32,8 @@ public class ConcurrentHTMLPageSaver implements Runnable, IHtmlPageSaver {
 
     @Override
     public void save(DocumentWrapper wDoc, String url) {
-        if(!thread.isAlive())
-            throw new IllegalStateException("Saving document to a closed thread");
+        //if(!thread.isAlive())
+            //throw new IllegalStateException("Saving document to a closed thread");
 
         try {
             pageSavingTaskQueue.put(new SaveTask(wDoc, url));
