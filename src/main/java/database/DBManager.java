@@ -33,7 +33,7 @@ public class DBManager {
 
     public DBManager() {
 //      MongoClient mongoClient = MongoClients.create("mongodb://admin:pass@mongo-dev.demosfortest.com:27017/");
-      MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
+        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         PageSaver = database.getCollection("PageSaver");
         Crawler = database.getCollection("Crawler");
@@ -424,6 +424,17 @@ public class DBManager {
             System.err.println("Unable to insert due to an error: " + me);
         }
         paragraphBulkWrite.clear();
+    }
+    public  HashMap<Long,String> findParagraphs(List<Long> hashs){
+        Bson doc = Filters.in("hash", hashs);
+        HashMap<Long,String> map = new HashMap<>();
+        FindIterable<Document> resultsIterable = Paragraphs.find(doc);
+        MongoCursor<Document> resultsCursor = resultsIterable.cursor();
+        while( resultsCursor.hasNext() ) {
+            Document result = resultsCursor.next();
+            map.put((long)result.get("hash"),(String)result.get("paragraph"));
+        }
+        return map;
     }
     public Document getWordDocument(String word){
         return SearchIndex.find(new Document().append("value",word)).first();

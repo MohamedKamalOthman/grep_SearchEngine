@@ -12,6 +12,8 @@ public class RankerResult {
     public double rank;
     public String title;
 
+
+    // if you want this to work properly get the paragraph with hash like we do in JSON
     @Override
     public String toString(){
         String result =  "URL = " + url + " HASH = " + hash + "\n" +
@@ -28,9 +30,10 @@ public class RankerResult {
         return result;
     }
     public Document toJSON(){
-        Document doc = new Document().append("title",title).append("p",topParagraphs.get(0).paragraph).append("url",url);
-
-        return doc;
+        return new Document()
+                .append("title",title)
+                .append("p", PageRanker.paragraphsMap.get(topParagraphs.get(0).hash))
+                .append("url",url);
     }
     @Override
     public int hashCode() {

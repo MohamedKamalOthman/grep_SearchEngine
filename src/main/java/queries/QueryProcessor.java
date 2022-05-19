@@ -13,11 +13,13 @@ import java.util.List;
 public class QueryProcessor {
     private String[] Query;
     private final PageRanker ranker;
+    long resultsAmount;
+    double time;
     public QueryProcessor(DBManager Manager) {
         ranker = new PageRanker(Manager);
     }
-
     public List<Document> rankQuery(String query) {
+        long start = System.currentTimeMillis();
         Query = query.toLowerCase().split("\\s+");
         ArrayList<ArrayList<RankerResult>> results = new ArrayList<>();
         for(String word : Query) {
@@ -40,7 +42,7 @@ public class QueryProcessor {
             return Double.compare(o2.rank, o1.rank);
         }));
 
-
+        ranker.setParagraphsMap();
         //logs falla7y
         for(var Result : RankedPages) {
             System.out.println(Result);
@@ -50,10 +52,18 @@ public class QueryProcessor {
         for (var doc:RankedPages) {
             searchResult.add(doc.toJSON());
         }
+        time = (System.currentTimeMillis() - start)/1000.0;
+        resultsAmount = RankedPages.size();
         System.out.println("No of results: " + RankedPages.size());
         return searchResult;
     }
+    public double getTime(){
+        return time;
+    }
 
+    public long getResultsAmount() {
+        return resultsAmount;
+    }
     public static void main(String[] args) {
 
         QueryProcessor magic = new QueryProcessor(new DBManager());

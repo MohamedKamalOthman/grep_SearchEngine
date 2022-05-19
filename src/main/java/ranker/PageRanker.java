@@ -1,18 +1,23 @@
 package ranker;
 
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCursor;
 import database.DBManager;
 import org.bson.Document;
 import utilities.HTMLParserUtilities;
 import utilities.Stemmer;
 
+import java.awt.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class PageRanker {
     private final DBManager Manager;
     private final HashMap<String,Number> popularityMap;
+    protected static HashMap<Long,String> paragraphsMap = new HashMap<>();
     public PageRanker(DBManager manager) {
         this.Manager = manager;
         popularityMap = Manager.getPopularity();
@@ -67,7 +72,7 @@ public class PageRanker {
                 ParagraphData p = new ParagraphData();
                 p.exactWord = (String) place.get("exactWord");
                 p.location = (long) place.get("location");
-                p.paragraph = ((String) place.get("paragraph")).trim();
+                p.hash = (long)place.get("paragraph");
                 result.paragraphs.add(p);
                 if(((String) place.get("exactWord")).equals(word)){
                     result.topParagraphs.add(p);
@@ -79,18 +84,23 @@ public class PageRanker {
             result.title = (String)occurrence.get("title");
             if(result.topParagraphs.isEmpty())
                 result.topParagraphs.add(result.paragraphs.get(0));
-
+            //fetch the top paragraph only from the database
+            paragraphsMap.put(result.topParagraphs.get(0).hash,"");
+            //finally, add the result
             Results.add(result);
         }
         return Results;
     }
-
+    public void setParagraphsMap(){
+        //after getting all results fetch all data from database only the paragraphs we need which in paragraphMap
+        paragraphsMap = Manager.findParagraphs(paragraphsMap.keySet().stream().toList());
+    }
     public static void main(String[] args) {
         DBManager db = new DBManager();
         PageRanker pageRanker = new PageRanker(db);
         var result = pageRanker.GetSingleWordResults("page");
         result.sort(((o1, o2) -> {
-            return o1.rank < o2.rank ? +1 : o1.rank > o2.rank ? -1 : 0;
+            return Double.compare(o2.rank, o1.rank);
         }));
         System.out.println(result);
     }

@@ -26,8 +26,6 @@ public class SearchEngineBackendApplication {
     protected MongoCollection<Document> queries;
     private final DBManager manager;
     private final QueryProcessor processor;
-    double time = 0;
-    long results = 0;
     public SearchEngineBackendApplication() {
         MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017/");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
@@ -57,15 +55,13 @@ public class SearchEngineBackendApplication {
     public List<Document> grep(@PathVariable String s) {
         //TODO refactor this to dbManager
         queries.updateOne(new Document(),Updates.addToSet("q",s.toLowerCase()),new UpdateOptions().upsert(true));
-        time = 1.2;
-        results = 100;
         return processor.rankQuery(s);
     }
 
     @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/stats")
     public Document timeElapsed() {
-        return new Document().append("time",time).append("results",results);
+        return new Document().append("time",processor.getTime()).append("results",processor.getResultsAmount());
     }
 
     //hopefully no one finds this code
