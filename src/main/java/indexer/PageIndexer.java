@@ -58,7 +58,7 @@ public class PageIndexer {
             } catch (IOException ex) {
                 ex.printStackTrace();
                 System.out.println("Error JSOUP parsing webpage");
-                return;
+                continue;
             }
 
             indexPage(page);

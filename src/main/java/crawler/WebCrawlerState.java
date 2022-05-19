@@ -35,6 +35,8 @@ public class WebCrawlerState {
     }
 
     public boolean isFinished(){
+        if(finished)
+            return finished;
         synchronized (manager){
             finished = manager.isFinishedCrawling();
             return finished;
@@ -42,22 +44,25 @@ public class WebCrawlerState {
     }
 
     public void saveFetchedUrls() {
-        List<String> fetchedUrlStrings = fetchedUrls.stream().map(FetchedUrl::getUrl).toList();
         Map<String, HostInformation> fetchedHosts = new HashMap<>();
         FetchedUrl currentFetchedUrl;
         HostInformation currentHostInfo;
+
+        //Serialized code
         synchronized (manager) {
-            BulkWriteResult results = manager.saveUrls(fetchedUrlStrings);
+            //Update crawler collection
+            BulkWriteResult results = manager.saveUrls(fetchedUrls);
             if(results == null)
                 return;
 
+            //update hosts collection
             for(BulkWriteUpsert upsert : results.getUpserts()) {
                 currentFetchedUrl = fetchedUrls.get(upsert.getIndex());
                 currentHostInfo = fetchedHosts.getOrDefault(currentFetchedUrl.host, new HostInformation());
                 currentHostInfo.fetchedCount++;
 
                 if(currentFetchedUrl.host == null)
-                    currentFetchedUrl.host = "null";
+                    currentFetchedUrl.host = "";
 
                 if(!currentFetchedUrl.host.isBlank() && !currentFetchedUrl.host.equals(currentFetchedUrl.parentHost)) {
                     currentHostInfo.refCount++;
@@ -83,7 +88,7 @@ public class WebCrawlerState {
     public String getNextUrl() {
         //if(isFinished())
             //return "";
-        return manager.fetchUrl();
+        return manager.priorityFetchUrl();
     }
 
     public void urlCrawled(String url) {
@@ -114,10 +119,6 @@ public class WebCrawlerState {
 
     public boolean docExists(long docHash) {
         return manager.docExists(docHash);
-    }
-
-    public void incrementHost(String host) {
-        manager.incrementHost(host);
     }
 
 

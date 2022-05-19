@@ -31,7 +31,23 @@ public class WebCrawler implements Runnable {
     @Override
     public void run() {
         String link = firstLink;
-        while (!Objects.equals(link, "")) { //null means no more links to crawl
+
+        while(true) {
+            while(Objects.equals(link, "") && !state.isFinished()) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    thread.interrupt();
+                }
+
+                link = state.getNextUrl();
+            }
+
+            //null means no more links to crawl
+            if(state.isFinished() && Objects.equals(link, ""))
+                break;
+
             crawl(link);
             link = state.getNextUrl();
         }

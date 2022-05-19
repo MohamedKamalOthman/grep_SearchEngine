@@ -29,7 +29,7 @@ public class SearchEngineBackendApplication {
     double time = 0;
     long results = 0;
     public SearchEngineBackendApplication() {
-        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
+        MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017/");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         crawler = database.getCollection("crawler");
         queries = database.getCollection("queries");

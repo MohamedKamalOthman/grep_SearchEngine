@@ -11,22 +11,34 @@ import pages.FileHtmlPageSaver;
 import pages.FileUrlListHandler;
 
 public class CrawlerTest {
+    private static final String pathName = "." + File.separator + "Files" + File.separator;
+    private static final DBManager manager = new DBManager();
+
     public static void main(String[] args) throws IOException {
-        String pathName = "." + File.separator + "Files" + File.separator;
-        DBManager manager = new DBManager();
+        startCrawling(6);
+
+        System.out.println("Finished Crawling!");
+
+        // Finished Crawling
+        // Start Indexing
+        PageIndexer indexer = new PageIndexer(pathName, manager);
+        indexer.indexAll();
+    }
+
+    private static void startCrawling(int nThreads) {
         manager.initializeCrawlerDB();
         // Must Start With Adding Our Start Pages For The First Run Only
+
+        manager.resetCrawledStatus();
 
         ArrayList<WebCrawler> crawlers = new ArrayList<>();
         ConcurrentHTMLPageSaver htmlSaver = new ConcurrentHTMLPageSaver(new FileHtmlPageSaver(pathName, manager));
         htmlSaver.start();
         FileUrlListHandler urlListHandler = new FileUrlListHandler("Urls.txt");
-        crawlers.add(new WebCrawler(manager.fetchUrl(), new WebCrawlerState(1, urlListHandler, htmlSaver, manager)));
-        crawlers.add(new WebCrawler(manager.fetchUrl(), new WebCrawlerState(2, urlListHandler, htmlSaver, manager)));
-        crawlers.add(new WebCrawler(manager.fetchUrl(), new WebCrawlerState(3, urlListHandler, htmlSaver, manager)));
-        crawlers.add(new WebCrawler(manager.fetchUrl(), new WebCrawlerState(4, urlListHandler, htmlSaver, manager)));
-        crawlers.add(new WebCrawler(manager.fetchUrl(), new WebCrawlerState(5, urlListHandler, htmlSaver, manager)));
-        crawlers.add(new WebCrawler(manager.fetchUrl(), new WebCrawlerState(6, urlListHandler, htmlSaver, manager)));
+
+        for(int i = 1; i <= nThreads; ++i) {
+            crawlers.add(new WebCrawler(manager.priorityFetchUrl(), new WebCrawlerState(i, urlListHandler, htmlSaver, manager)));
+        }
 
         for (WebCrawler w : crawlers) {
             try {
@@ -46,13 +58,5 @@ public class CrawlerTest {
             e.printStackTrace();
             t.interrupt();
         }
-
-        System.out.println("Finished Crawling!");
-
-        // Finished Crawling
-        // Start Indexing
-        PageIndexer indexer = new PageIndexer(pathName, manager);
-        indexer.indexAll();
-
     }
 }

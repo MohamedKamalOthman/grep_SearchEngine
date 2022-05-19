@@ -2,14 +2,18 @@ package database;
 
 import com.mongodb.*;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.client.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.*;
 import com.mongodb.client.result.UpdateResult;
+import crawler.FetchedUrl;
 import crawler.HostInformation;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 
@@ -32,13 +36,17 @@ public class DBManager {
       MongoClient mongoClient = MongoClients.create("mongodb://localhost:27017");
         MongoDatabase database = mongoClient.getDatabase("SearchEngine");
         PageSaver = database.getCollection("PageSaver");
-        Crawler = database.getCollection("crawler");
+        Crawler = database.getCollection("Crawler");
         SearchIndex = database.getCollection("SearchIndex");
         Popularity = database.getCollection("Popularity");
         MongoDatabase database1 = mongoClient.getDatabase("test");
         Testing = database1.getCollection("testing");
         Paragraphs = database.getCollection("Paragraphs");
     }
+
+    //
+    // Crawler methods
+    //
 
     //crawler first run
     public void initializeCrawlerDB(){
@@ -50,22 +58,56 @@ public class DBManager {
         if (count >= 5100) {
             finishedCrawling = true;
         }
+
         if(count != 0)
             return;
-        ArrayList seed = new ArrayList<>();
-        seed.add("https://en.wikipedia.org/wiki/Main_Page");
-        seed.add("https://codeforces.com");
-        seed.add("https://stackoverflow.com");
-        saveUrls(seed);
-    }
-    public void resetReCrawl(){
 
+        List<String> seedUrls = new ArrayList<>();
+        seedUrls.add("https://en.wikipedia.org/wiki/Main_Page");
+        seedUrls.add("https://codeforces.com");
+        seedUrls.add("https://stackoverflow.com");
+        List<FetchedUrl> seed = new ArrayList<>();
+        URL url;
+        for(var seedUrl : seedUrls) {
+            try {
+                 url = new URL(seedUrl);
+            } catch (MalformedURLException e) {
+                continue;
+            }
+
+            seed.add(new FetchedUrl(url.toString(), null, url.getHost()));
+        }
+
+        Map<String, HostInformation> fetchedHosts = new HashMap<>();
+        FetchedUrl currentFetchedUrl;
+        HostInformation currentHostInfo;
+        //Update crawler collection
+        BulkWriteResult results = saveUrls(seed);
+        if(results == null)
+            return;
+
+        //update hosts collection
+        for(BulkWriteUpsert upsert : results.getUpserts()) {
+            currentFetchedUrl = seed.get(upsert.getIndex());
+            currentHostInfo = fetchedHosts.getOrDefault(currentFetchedUrl.host, new HostInformation());
+            currentHostInfo.fetchedCount++;
+
+            if(currentFetchedUrl.host == null)
+                currentFetchedUrl.host = "";
+
+            if(!currentFetchedUrl.host.isBlank() && !currentFetchedUrl.host.equals(currentFetchedUrl.parentHost)) {
+                currentHostInfo.refCount++;
+            }
+
+            fetchedHosts.putIfAbsent(currentFetchedUrl.host, currentHostInfo);
+        }
+
+        incrementHosts(fetchedHosts);
     }
-    //region Crawler Methods
     public boolean savePage(String url, long docHash, boolean indexed) {
         Document document = new Document();
         document.append("url", url);
-        PageSaver.updateOne(document,Updates.combine(Updates.set("indexed", indexed),Updates.set("hash", docHash)) ,new UpdateOptions().upsert(true));
+        PageSaver.updateOne(document,Updates.combine(Updates.set("indexed", indexed), Updates.set("hash", docHash)), new UpdateOptions().upsert(true));
         return true;
     }
 
@@ -97,15 +139,16 @@ public class DBManager {
         }
     }
 
-    public BulkWriteResult saveUrls(Iterable<String> urls) {
+    public BulkWriteResult saveUrls(Iterable<FetchedUrl> fetchedUrls) {
         if(finishedCrawling)
             return null;
 
         List<UpdateOneModel<Document>> crawlerBulkWrite = new ArrayList<>();
 
-        for (String url : urls) {
-            Document query = new Document().append("url", url);
+        for (FetchedUrl fetchedUrl : fetchedUrls) {
+            Document query = new Document().append("url", fetchedUrl.url);
             Bson updates = Updates.combine(
+                    Updates.setOnInsert("host", fetchedUrl.host),
                     Updates.setOnInsert("crawled", 0)
             );
             UpdateOptions options = new UpdateOptions().upsert(true);
@@ -115,7 +158,7 @@ public class DBManager {
             try {
                 var result = Crawler.bulkWrite(crawlerBulkWrite);
                 long count = Crawler.countDocuments();
-                if (count >= 300) {
+                if (count >= 600) {
                     finishedCrawling = true;
                 }
                 return result;
@@ -151,6 +194,35 @@ public class DBManager {
             return "";
         else
             return (String) ((Document) out).get("url");
+    }
+
+    public String fetchUrl(String host) {
+
+        Document query = new Document().append("crawled", 0).append("host", host);
+        Bson updates = Updates.combine(
+                Updates.set("crawled", 1)
+        );
+        FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().upsert(false);//if true new document will be inserted
+        Bson out = Crawler.findOneAndUpdate(query, updates, options);
+        if (out == null)
+            return "";
+        else
+            return (String) ((Document) out).get("url");
+    }
+
+    public String priorityFetchUrl() {
+        Bson query = Filters.where("this.fetchedCount != this.crawledCount");
+        FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().upsert(false).sort(Sorts.ascending("crawledCount"));
+        Bson updates = Updates.combine(
+                Updates.inc("crawledCount", 1)
+        );
+        synchronized (this) {
+            Document out = Popularity.findOneAndUpdate(query, updates, options);
+            if (out == null)
+                return "";
+            else
+                return fetchUrl((String) out.get("host"));
+        }
     }
 
     public boolean updateUrl(String url, int status) {
@@ -191,6 +263,46 @@ public class DBManager {
         }
     }
 
+    /*public boolean incrementHost(String host) {
+        Document query = new Document().append("host", host);
+        Bson updates = Updates.combine(
+                Updates.inc("refCount", 1)
+        );
+        UpdateOptions options = new UpdateOptions().upsert(true);
+        try {
+            UpdateResult result = Popularity.updateOne(query, updates, options);
+            System.out.println("Modified document count: " + result.getModifiedCount());
+            System.out.println("Upserted id: " + result.getUpsertedId()); // only contains a value when an upsert is performed
+            return true;
+        } catch (MongoException me) {
+            System.err.println("Unable to update due to an error: " + me);
+            return false;
+        }
+    }*/
+
+    public boolean incrementHosts(Map<String, HostInformation> hosts) {
+        List<UpdateOneModel<Document>> popularityBulkWrite = new ArrayList<>();
+        for (var host : hosts.entrySet()) {
+            Document query = new Document().append("host", host.getKey());
+            Bson updates = Updates.combine(
+                    Updates.inc("fetchedCount", host.getValue().fetchedCount),
+                    Updates.setOnInsert("crawledCount", 0),
+                    Updates.inc("refCount", host.getValue().refCount)
+            );
+            UpdateOptions options = new UpdateOptions().upsert(true);
+            popularityBulkWrite.add(new UpdateOneModel<>(query, updates, options));
+        }
+        if(!popularityBulkWrite.isEmpty())
+            try {
+                var result = Popularity.bulkWrite(popularityBulkWrite);
+                return result.getInsertedCount() != 0;
+            } catch (MongoException | IllegalArgumentException me) {
+                System.err.println("Unable to update due to an error: " + me);
+                return false;
+            }
+        return false;
+    }
+
     //endregion
 
     public Document getUrlForIndexing() {
@@ -225,45 +337,7 @@ public class DBManager {
         return PageSaver.countDocuments(where) > 0;
     }
 
-    public boolean incrementHost(String host) {
-        Document query = new Document().append("host", host);
-        Bson updates = Updates.combine(
-                Updates.inc("refCount", 1)
-        );
-        UpdateOptions options = new UpdateOptions().upsert(true);
-        try {
-            UpdateResult result = Popularity.updateOne(query, updates, options);
-            System.out.println("Modified document count: " + result.getModifiedCount());
-            System.out.println("Upserted id: " + result.getUpsertedId()); // only contains a value when an upsert is performed
-            return true;
-        } catch (MongoException me) {
-            System.err.println("Unable to update due to an error: " + me);
-            return false;
-        }
-    }
 
-    public boolean incrementHosts(Map<String, HostInformation> hosts) {
-        List popularityBulkWrtie = new ArrayList();
-        for (String host : hosts.keySet()) {
-            Document query = new Document().append("host", host);
-            Bson updates = Updates.combine(
-                    Updates.inc("fetchedCount", hosts.get(host).fetchedCount),
-                    Updates.setOnInsert("crawledCount", 0),
-                    Updates.inc("refCount", hosts.get(host).refCount)
-            );
-            UpdateOptions options = new UpdateOptions().upsert(true);
-            popularityBulkWrtie.add(new UpdateOneModel(query, updates, options));
-        }
-        if(!popularityBulkWrtie.isEmpty())
-            try {
-                var result = Popularity.bulkWrite(popularityBulkWrtie);
-                return result.getInsertedCount() != 0;
-            } catch (MongoException | IllegalArgumentException me) {
-                System.err.println("Unable to update due to an error: " + me);
-                return false;
-            }
-        return false;
-    }
 
     public void insertParagraph(String paragraph, long paragraphHash) {
         Document query = new Document().append("paragraph", paragraph).append("hash", paragraphHash);
