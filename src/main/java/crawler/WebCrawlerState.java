@@ -6,10 +6,7 @@ import com.mongodb.bulk.BulkWriteUpsert;
 import pages.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class WebCrawlerState {
     private final int id;
@@ -85,6 +82,10 @@ public class WebCrawlerState {
         urlListHandler.add(url);
     }
 
+    public void refreshDocument(DocumentWrapper doc, String url){
+        htmlPageSaver.save(doc, url);
+    }
+
     public String getNextUrl() {
         //if(isFinished())
             //return "";
@@ -121,7 +122,20 @@ public class WebCrawlerState {
         return manager.docExists(docHash);
     }
 
-
+    public String getUrlReCrawl(){
+        String url = manager.reCrawlFetchUrl();
+        if (Objects.equals(url,""))
+            return "";
+        //delete occuarrence
+        //delete paragraph
+        //set indexed to false
+        long hash = 0;
+        manager.cleanWebPageData(url);
+        return url;
+    }
+    public void cleanWebPageData(String url){
+        manager.cleanWebPageData(url);
+    }
     public static void main(String[] args) {
         DBManager manager = new DBManager();
         // Must Start With Adding Our Start Pages For The First Run Only

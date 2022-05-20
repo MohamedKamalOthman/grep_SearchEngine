@@ -45,16 +45,18 @@ public class QueryProcessor {
 
         // Get Paragraphs From Database
         ranker.setParagraphsMap();
-        //logs falla7y
-        for(var Result : RankedPages) {
-            System.out.println(Result);
-        }
+
         //return result list of json
         List<Document> searchResult = new ArrayList<>();
         for (var doc:RankedPages) {
             searchResult.add(doc.toJSON());
         }
         time = (System.currentTimeMillis() - start)/1000.0;
+        //logs falla7y
+        for(var Result : RankedPages) {
+            System.out.println(Result);
+        }
+
         resultsAmount = RankedPages.size();
         System.out.println("No of results: " + RankedPages.size());
         return searchResult;

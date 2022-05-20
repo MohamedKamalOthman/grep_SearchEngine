@@ -15,6 +15,7 @@ public class WebCrawler implements Runnable {
     private final String firstLink;
     private final Thread thread;
     private final WebCrawlerState state;
+    private boolean reCrawling = true;
 
     WebCrawler(String firstLink, WebCrawlerState state) {
         thread = new Thread(this);
@@ -32,25 +33,31 @@ public class WebCrawler implements Runnable {
     public void run() {
         String link = firstLink;
 
-        while(true) {
-            while(Objects.equals(link, "") && !state.isFinished()) {
-                try {
-                    // TODO Better Use Wait And Notify
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    thread.interrupt();
-                }
-
-                link = state.getNextUrl();
-            }
-
-            //null means no more links to crawl
-            if(state.isFinished() && Objects.equals(link, ""))
+//        while(true) {
+//            while(Objects.equals(link, "") && !state.isFinished()) {
+//                try {
+//                    // TODO Better Use Wait And Notify
+//                    Thread.sleep(2000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                    thread.interrupt();
+//                }
+//
+//                link = state.getNextUrl();
+//            }
+//
+//            //null means no more links to crawl
+//            if(state.isFinished() && Objects.equals(link, ""))
+//                break;
+//
+//            crawl(link);
+//            link = state.getNextUrl();
+//        }
+        while (reCrawling){
+            link = state.getUrlReCrawl();
+            if(Objects.equals(link, ""))
                 break;
-
-            crawl(link);
-            link = state.getNextUrl();
+            reCrawl(link);
         }
     }
 
@@ -73,6 +80,22 @@ public class WebCrawler implements Runnable {
         }
 
         state.urlCrawled(url);
+    }
+    private void reCrawl(String url) {
+        DocumentWrapper wDoc = new DocumentWrapper(request(url));
+        Document doc = wDoc.doc;
+
+        if (doc != null && !state.docExists(wDoc.crc)) {
+            String host = null;
+            try {
+                host = new URL(url).getHost();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            state.cleanWebPageData(url);
+            state.refreshDocument(wDoc, url);
+        }else System.out.println("\u001B[43m=====================================================================\u001B[0m");
+
     }
 
     private void fetchLinks(Document doc, String host) {

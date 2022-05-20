@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Sorts.descending;
 
 public class DBManager {
     protected MongoCollection<Document> PageSaver;
@@ -49,17 +50,17 @@ public class DBManager {
     //
 
     //crawler first run
-    public void initializeCrawlerDB(){
+    public void initializeCrawlerDB() {
         //Reset interrupted crawlers
-        Document query = new Document().append("crawled",1);
-        Crawler.updateMany(query,Updates.set("crawled",0),new UpdateOptions().upsert(false));
+        Document query = new Document().append("crawled", 1);
+        Crawler.updateMany(query, Updates.set("crawled", 0), new UpdateOptions().upsert(false));
         //set seed if not already exist
         long count = Crawler.countDocuments();
         if (count >= 5100) {
             finishedCrawling = true;
         }
 
-        if(count != 0)
+        if (count != 0)
             return;
 
         List<String> seedUrls = new ArrayList<>();
@@ -68,9 +69,9 @@ public class DBManager {
         seedUrls.add("https://stackoverflow.com");
         List<FetchedUrl> seed = new ArrayList<>();
         URL url;
-        for(var seedUrl : seedUrls) {
+        for (var seedUrl : seedUrls) {
             try {
-                 url = new URL(seedUrl);
+                url = new URL(seedUrl);
             } catch (MalformedURLException e) {
                 continue;
             }
@@ -83,19 +84,19 @@ public class DBManager {
         HostInformation currentHostInfo;
         //Update crawler collection
         BulkWriteResult results = saveUrls(seed);
-        if(results == null)
+        if (results == null)
             return;
 
         //update hosts collection
-        for(BulkWriteUpsert upsert : results.getUpserts()) {
+        for (BulkWriteUpsert upsert : results.getUpserts()) {
             currentFetchedUrl = seed.get(upsert.getIndex());
             currentHostInfo = fetchedHosts.getOrDefault(currentFetchedUrl.host, new HostInformation());
             currentHostInfo.fetchedCount++;
 
-            if(currentFetchedUrl.host == null)
+            if (currentFetchedUrl.host == null)
                 currentFetchedUrl.host = "";
 
-            if(!currentFetchedUrl.host.isBlank() && !currentFetchedUrl.host.equals(currentFetchedUrl.parentHost)) {
+            if (!currentFetchedUrl.host.isBlank() && !currentFetchedUrl.host.equals(currentFetchedUrl.parentHost)) {
                 currentHostInfo.refCount++;
             }
 
@@ -104,10 +105,11 @@ public class DBManager {
 
         incrementHosts(fetchedHosts);
     }
+
     public boolean savePage(String url, long docHash, boolean indexed) {
         Document document = new Document();
         document.append("url", url);
-        PageSaver.updateOne(document,Updates.combine(Updates.set("indexed", indexed), Updates.set("hash", docHash)), new UpdateOptions().upsert(true));
+        PageSaver.updateOne(document, Updates.combine(Updates.set("indexed", indexed), Updates.set("hash", docHash)), new UpdateOptions().upsert(true));
         return true;
     }
 
@@ -140,7 +142,7 @@ public class DBManager {
     }
 
     public BulkWriteResult saveUrls(Iterable<FetchedUrl> fetchedUrls) {
-        if(finishedCrawling)
+        if (finishedCrawling)
             return null;
 
         List<UpdateOneModel<Document>> crawlerBulkWrite = new ArrayList<>();
@@ -154,7 +156,7 @@ public class DBManager {
             UpdateOptions options = new UpdateOptions().upsert(true);
             crawlerBulkWrite.add(new UpdateOneModel<>(query, updates, options));
         }
-        if(!crawlerBulkWrite.isEmpty())
+        if (!crawlerBulkWrite.isEmpty())
             try {
                 var result = Crawler.bulkWrite(crawlerBulkWrite);
                 long count = Crawler.countDocuments();
@@ -176,10 +178,7 @@ public class DBManager {
     public boolean searchUrl(String url) {
         Document query = new Document().append("url", url);
         long count = Crawler.countDocuments(query);
-        if (count > 0)
-            return true;
-        else
-            return false;
+        return count > 0;
     }
 
     public String fetchUrl() {
@@ -225,6 +224,23 @@ public class DBManager {
         }
     }
 
+    public String reCrawlFetchUrl() {
+        //only re-crawl within an hour
+        final long oneHour = 3600000L;
+        Document query = new Document().append("crawled", 2);
+        FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().upsert(false).sort(Sorts.ascending("date"));
+        Bson updates = Updates.combine(
+                Updates.set("date", new Date())
+        );
+        synchronized (this) {
+            Document out = Crawler.findOneAndUpdate(query, updates, options);
+            if (out == null || (new Date().getTime()) - ((Date) out.get("date")).getTime() < oneHour)
+                return "";
+            else
+                return (String) out.get("url");
+        }
+    }
+
     public boolean updateUrl(String url, int status) {
         Document query = new Document().append("url", url);
         Bson updates = Updates.combine(
@@ -247,7 +263,8 @@ public class DBManager {
         for (String url : urls) {
             Document query = new Document().append("url", url);
             Bson updates = Updates.combine(
-                    Updates.set("crawled", status)
+                    Updates.set("crawled", status),
+                    Updates.set("date", new Date())
             );
             UpdateOptions options = new UpdateOptions().upsert(false);
             UpdateBulkWrite.add(new UpdateOneModel(query, updates, options));
@@ -292,7 +309,7 @@ public class DBManager {
             UpdateOptions options = new UpdateOptions().upsert(true);
             popularityBulkWrite.add(new UpdateOneModel<>(query, updates, options));
         }
-        if(!popularityBulkWrite.isEmpty())
+        if (!popularityBulkWrite.isEmpty())
             try {
                 var result = Popularity.bulkWrite(popularityBulkWrite);
                 return result.getInsertedCount() != 0;
@@ -338,13 +355,12 @@ public class DBManager {
     }
 
 
-
     public void insertParagraph(String paragraph, long paragraphHash) {
         Document query = new Document().append("paragraph", paragraph).append("hash", paragraphHash);
         paragraphBulkWrite.add(new InsertOneModel(query));
     }
 
-    public void insertOccurrence(String url, String value, String text_type, long location, long length, String title,long hash, String exactWord, long paragraphHash) {
+    public void insertOccurrence(String url, String value, String text_type, long location, long length, String title, long hash, String exactWord, long paragraphHash) {
         Document query = new Document().append("value", value);
 //        query.append("occurrences.url",url);
 //        Updates.
@@ -425,19 +441,21 @@ public class DBManager {
         }
         paragraphBulkWrite.clear();
     }
-    public  HashMap<Long,String> findParagraphs(List<Long> hashs){
+
+    public HashMap<Long, String> findParagraphs(List<Long> hashs) {
         Bson doc = Filters.in("hash", hashs);
-        HashMap<Long,String> map = new HashMap<>();
+        HashMap<Long, String> map = new HashMap<>();
         FindIterable<Document> resultsIterable = Paragraphs.find(doc);
         MongoCursor<Document> resultsCursor = resultsIterable.cursor();
-        while( resultsCursor.hasNext() ) {
+        while (resultsCursor.hasNext()) {
             Document result = resultsCursor.next();
-            map.put((long)result.get("hash"),(String)result.get("paragraph"));
+            map.put((long) result.get("hash"), (String) result.get("paragraph"));
         }
         return map;
     }
-    public Document getWordDocument(String word){
-        return SearchIndex.find(new Document().append("value",word)).first();
+
+    public Document getWordDocument(String word) {
+        return SearchIndex.find(new Document().append("value", word)).first();
     }
 
     public FindIterable<Document> getMultipleWordDocument(List<String> words) {
@@ -445,23 +463,21 @@ public class DBManager {
         return SearchIndex.find(doc);
     }
 
-    public HashMap<String,Number> getPopularity(){
-        HashMap<String,Number> map = new HashMap<>();
+    public HashMap<String, Number> getPopularity() {
+        HashMap<String, Number> map = new HashMap<>();
         FindIterable<Document> resultsIterable = Popularity.find(new Document());
         MongoCursor<Document> resultsCursor = resultsIterable.cursor();
         for (MongoCursor<Document> it = resultsCursor; it.hasNext(); ) {
             Document result = it.next();
-            map.put((String)result.get("host"),(Number)result.get("refCount"));
+            map.put((String) result.get("host"), (Number) result.get("refCount"));
         }
         return map;
     }
 
-    public void Test()
-    {
-        var result = SearchIndex.find(eq("value","programmings")).first();
+    public void Test() {
+        var result = SearchIndex.find(eq("value", "programmings")).first();
         Document occurrences = (Document) result.get("occurrences");
-        for (String field : occurrences.keySet())
-        {
+        for (String field : occurrences.keySet()) {
             System.out.println(field + " " + occurrences.get(field));
         }
     }
@@ -482,6 +498,25 @@ public class DBManager {
         }
     }
 
+    //call this method if crc is changed, so you can nuke all previous data related to web page
+    //tested and working
+    public void cleanWebPageData(String url) {
+        Document query = new Document().append("url", url);
+        long hash = 0L;
+        //fetch old hash and reset indexed to false
+        try {
+            hash = (long) (PageSaver.findOneAndUpdate(query, Updates.set("indexed", false)).get("hash"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        //delete occurrences
+        query = new Document();
+        SearchIndex.updateMany(query, Updates.unset("occurrences." + hash), new UpdateOptions().bypassDocumentValidation(true));
+        //delete paragraph
+        Paragraphs.deleteMany(Filters.where("(" + hash + " ^ (this.hash & 0xffffffff)) == 0"));
+    }
+
     //for testing only!
     public static void main(String[] args) {
         DBManager d = new DBManager();
@@ -490,6 +525,10 @@ public class DBManager {
 //        d.insertOccurrence("https://www.stackoverflowe.com","programmings","header",78,-86, "programming","paragraph");
 //        d.bulkWriteIndexer();
         //  d.SetNormalizedTermFrequency();
-        d.Test();
+        // d.test();
+        //System.out.println(d.reCrawlFetchUrl());
+//        long start = System.currentTimeMillis();
+//        d.cleanWebPageData("https://telegram.org/");
+//        System.out.println("Took " + (System.currentTimeMillis() - start) + "ms to run!");
     }
 }
