@@ -23,7 +23,7 @@ public class PageRanker {
         popularityMap = Manager.getPopularity();
     }
 
-    public ArrayList<RankerResult> GetSingleWordResults(String word){
+    public ArrayList<RankerResult> GetSingleWordResults(String word, boolean strictSearch){
         String stemmed_word = Stemmer.stemWord(word);
         if(stemmed_word == null)
             return null;
@@ -46,7 +46,8 @@ public class PageRanker {
             double normalized_term_frequency = (double) (term_frequency) / (double) totalLength;
             if(normalized_term_frequency > 0.5)
                 continue;
-            // Initial Rank Of Page
+
+            /** Initial Rank Of Page */
             result.rank = inverse_document_frequency * normalized_term_frequency;
             try {
                 var host = new URL(result.url);
@@ -79,18 +80,60 @@ public class PageRanker {
                     count++;
                 }
             }
+
             // Update Rank Of Pages With The Exact Word
             result.rank *= (count / (double) totalLength);
             result.title = (String)occurrence.get("title");
             if(result.topParagraphs.isEmpty())
-                result.topParagraphs.add(result.paragraphs.get(0));
+            {
+                if(strictSearch == true)
+                    continue;
+                else
+                    result.topParagraphs.add(result.paragraphs.get(0));
+            }
+
             //fetch the top paragraph only from the database
             paragraphsMap.put(result.topParagraphs.get(0).hash,"");
+
             //finally, add the result
             Results.add(result);
         }
         return Results;
     }
+
+    public ArrayList<RankerResult> GetPhraseMatchResults(String phrase)
+    {
+        String[] words = phrase.toLowerCase().split("\\s+");
+
+        ArrayList<ArrayList<RankerResult>> results = new ArrayList<>();
+        for(String word : words) {
+            var result = GetSingleWordResults(word, true);
+            if(result != null)
+                results.add(result);
+        }
+
+        HashMap<RankerResult, Double> AggregatedResults = new HashMap<>();
+
+        for(var ResultsList : results) {
+            for(var Result : ResultsList) {
+                if(true){
+
+                }
+                AggregatedResults.put(Result, AggregatedResults.getOrDefault(Result, 0.0) + Result.rank);
+            }
+        }
+
+        for(var Result : AggregatedResults.keySet()) {
+            Result.rank = AggregatedResults.get(Result);
+        }
+
+        ArrayList<RankerResult> RankedPages = new ArrayList<>(AggregatedResults.keySet());
+        RankedPages.sort(((o1, o2) -> {
+            return Double.compare(o2.rank, o1.rank);
+        }));
+        return null;
+    }
+
     public void setParagraphsMap(){
         //after getting all results fetch all data from database only the paragraphs we need which in paragraphMap
         paragraphsMap = Manager.findParagraphs(paragraphsMap.keySet().stream().toList());
@@ -98,7 +141,7 @@ public class PageRanker {
     public static void main(String[] args) {
         DBManager db = new DBManager();
         PageRanker pageRanker = new PageRanker(db);
-        var result = pageRanker.GetSingleWordResults("page");
+        var result = pageRanker.GetSingleWordResults("page", false);
         result.sort(((o1, o2) -> {
             return Double.compare(o2.rank, o1.rank);
         }));

@@ -23,7 +23,7 @@ public class QueryProcessor {
         Query = query.toLowerCase().split("\\s+");
         ArrayList<ArrayList<RankerResult>> results = new ArrayList<>();
         for(String word : Query) {
-            var result = ranker.GetSingleWordResults(word);
+            var result = ranker.GetSingleWordResults(word, false);
             if(result != null)
                 results.add(result);
         }
@@ -34,6 +34,7 @@ public class QueryProcessor {
                 AggregatedResults.put(Result, AggregatedResults.getOrDefault(Result, 0.0) + Result.rank);
             }
         }
+
         for(var Result : AggregatedResults.keySet()) {
             Result.rank = AggregatedResults.get(Result);
         }
@@ -42,6 +43,7 @@ public class QueryProcessor {
             return Double.compare(o2.rank, o1.rank);
         }));
 
+        // Get Paragraphs From Database
         ranker.setParagraphsMap();
         //logs falla7y
         for(var Result : RankedPages) {
@@ -64,6 +66,7 @@ public class QueryProcessor {
     public long getResultsAmount() {
         return resultsAmount;
     }
+
     public static void main(String[] args) {
 
         QueryProcessor magic = new QueryProcessor(new DBManager());

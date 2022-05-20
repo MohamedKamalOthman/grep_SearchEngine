@@ -35,6 +35,7 @@ public class WebCrawler implements Runnable {
         while(true) {
             while(Objects.equals(link, "") && !state.isFinished()) {
                 try {
+                    // TODO Better Use Wait And Notify
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
