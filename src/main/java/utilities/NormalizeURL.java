@@ -50,16 +50,9 @@ public class NormalizeURL
             queryString = "";
         }
 
-        String result = url.getProtocol() + "://" + url.getHost()
+        return url.getProtocol() + "://" + url.getHost()
                 + (port != -1 && port != 80 ? ":" + port : "")
                 + path + queryString;
-
-        if(result.isBlank())
-            return result;
-        if(result.charAt(result.length() - 1) == '/')
-            return result.substring(0, result.length() - 1);
-
-        return result;
     }
 
     /**
