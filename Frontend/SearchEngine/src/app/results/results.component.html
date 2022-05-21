@@ -10,7 +10,7 @@
                                 src="assets/img/icons8-console-48.png" class="lg-hover"></span>
                     </div>
                     <input id="q" name="q" type="text" class="form-control" [formControl]="q" [matAutocomplete]="auto"
-                        formControlName="search">
+                        >
                     <mat-autocomplete #auto="matAutocomplete">
                         <mat-option *ngFor="let option of filteredOptions | async | slice : 0 : 5" [value]="option">
                             {{option}}
