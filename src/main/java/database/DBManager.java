@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Projections.*;
 import static com.mongodb.client.model.Sorts.descending;
 
 public class DBManager {
@@ -515,6 +516,24 @@ public class DBManager {
         SearchIndex.updateMany(query, Updates.unset("occurrences." + hash), new UpdateOptions().bypassDocumentValidation(true));
         //delete paragraph
         Paragraphs.deleteMany(Filters.where("(" + hash + " ^ (this.hash & 0xffffffff)) == 0"));
+    }
+
+    public Set<Long> getExactPhraseParagraphs(String phrase) {
+        Bson textFilter = Filters.text('\"' + phrase + '\"', new TextSearchOptions().caseSensitive(false));
+        FindIterable<Document> result = Paragraphs.find(textFilter).projection(fields(include("hash"), exclude("_id")));
+        Set<Long> hashes = new HashSet<>();
+        Long hash;
+        for(Document doc : result) {
+            try {
+                hash = (Long)doc.get("hash");
+            }
+            catch(Exception ex) {
+                continue;
+            }
+            hashes.add(hash);
+        }
+
+        return hashes;
     }
 
     //for testing only!

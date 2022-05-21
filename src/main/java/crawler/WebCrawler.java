@@ -4,10 +4,10 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import utilities.NormalizeURL;
 import utilities.RobotsTxtUtilities;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
 
@@ -33,26 +33,27 @@ public class WebCrawler implements Runnable {
     public void run() {
         String link = firstLink;
 
-//        while(true) {
-//            while(Objects.equals(link, "") && !state.isFinished()) {
-//                try {
-//                    // TODO Better Use Wait And Notify
-//                    Thread.sleep(2000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                    thread.interrupt();
-//                }
-//
-//                link = state.getNextUrl();
-//            }
-//
-//            //null means no more links to crawl
-//            if(state.isFinished() && Objects.equals(link, ""))
-//                break;
-//
-//            crawl(link);
-//            link = state.getNextUrl();
-//        }
+        while(true) {
+            while(Objects.equals(link, "") && !state.isFinished()) {
+                try {
+                    // TODO Better Use Wait And Notify
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    thread.interrupt();
+                }
+
+                link = state.getNextUrl();
+            }
+
+            //null means no more links to crawl
+            if(state.isFinished() && Objects.equals(link, ""))
+                break;
+
+            crawl(link);
+            link = state.getNextUrl();
+        }
+
         while (reCrawling){
             link = state.getUrlReCrawl();
             if(Objects.equals(link, ""))
@@ -103,7 +104,7 @@ public class WebCrawler implements Runnable {
             URL nextLink;
             try {
                 //Normalize url
-                nextLink = new URL(URI.create(link.absUrl("href").toLowerCase()).normalize().toString());
+                nextLink = new URL(NormalizeURL.normalize(link.absUrl("href").toLowerCase()));
             } catch (MalformedURLException | IllegalArgumentException e) {
                 continue;
             }

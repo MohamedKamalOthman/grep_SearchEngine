@@ -1,23 +1,21 @@
 package ranker;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
 import database.DBManager;
 import org.bson.Document;
 import utilities.HTMLParserUtilities;
 import utilities.Stemmer;
 
-import java.awt.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Set;
 
 public class PageRanker {
     private final DBManager Manager;
     private final HashMap<String,Number> popularityMap;
-    protected static HashMap<Long,String> paragraphsMap = new HashMap<>();
+    private static HashMap<Long,String> paragraphsMap = new HashMap<>();
+    protected static HashMap<Long,String> fetchedParagraphsMap = new HashMap<>();
     public PageRanker(DBManager manager) {
         this.Manager = manager;
         popularityMap = Manager.getPopularity();
@@ -86,7 +84,7 @@ public class PageRanker {
             result.title = (String)occurrence.get("title");
             if(result.topParagraphs.isEmpty())
             {
-                if(strictSearch == true)
+                if(strictSearch)
                     continue;
                 else
                     result.topParagraphs.add(result.paragraphs.get(0));
@@ -101,43 +99,16 @@ public class PageRanker {
         return Results;
     }
 
-    public ArrayList<RankerResult> GetPhraseMatchResults(String phrase)
+    public Set<Long> getPhraseMatchHashes(String phrase)
     {
-        String[] words = phrase.toLowerCase().split("\\s+");
-
-        ArrayList<ArrayList<RankerResult>> results = new ArrayList<>();
-        for(String word : words) {
-            var result = GetSingleWordResults(word, true);
-            if(result != null)
-                results.add(result);
-        }
-
-        HashMap<RankerResult, Double> AggregatedResults = new HashMap<>();
-
-        for(var ResultsList : results) {
-            for(var Result : ResultsList) {
-                if(true){
-
-                }
-                AggregatedResults.put(Result, AggregatedResults.getOrDefault(Result, 0.0) + Result.rank);
-            }
-        }
-
-        for(var Result : AggregatedResults.keySet()) {
-            Result.rank = AggregatedResults.get(Result);
-        }
-
-        ArrayList<RankerResult> RankedPages = new ArrayList<>(AggregatedResults.keySet());
-        RankedPages.sort(((o1, o2) -> {
-            return Double.compare(o2.rank, o1.rank);
-        }));
-        return null;
+        return Manager.getExactPhraseParagraphs(phrase);
     }
 
     public void setParagraphsMap(){
         //after getting all results fetch all data from database only the paragraphs we need which in paragraphMap
-        paragraphsMap = Manager.findParagraphs(paragraphsMap.keySet().stream().toList());
+        fetchedParagraphsMap = Manager.findParagraphs(paragraphsMap.keySet().stream().toList());
     }
+
     public static void main(String[] args) {
         DBManager db = new DBManager();
         PageRanker pageRanker = new PageRanker(db);
@@ -146,5 +117,9 @@ public class PageRanker {
             return Double.compare(o2.rank, o1.rank);
         }));
         System.out.println(result);
+    }
+
+    public void prefetchParagraph(long hash) {
+        paragraphsMap.put(hash, "");
     }
 }
