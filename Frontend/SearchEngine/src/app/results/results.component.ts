@@ -69,7 +69,7 @@ export class ResultsComponent implements OnInit {
       this.router.navigate(['/search']);
     }
     this.query = q;
-    this.searchWords = this.query?.split(/[ ,]+/) as string[];
+    this.searchWords = this.query?.replace(/"/g, " ").trim().split(/[ ,]+/) as string[];
     this.findService.Find(q).subscribe((data) => {
       this.results = data as any;
       this.pages = Math.ceil(this.results.length / 10.0);
