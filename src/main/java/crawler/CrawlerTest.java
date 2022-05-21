@@ -14,7 +14,7 @@ public class CrawlerTest {
     private static final String pathName = "." + File.separator + "Files" + File.separator;
     private static final DBManager manager = new DBManager();
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         startCrawling(6);
 
         System.out.println("Finished Crawling!");

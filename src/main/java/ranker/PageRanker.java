@@ -31,7 +31,7 @@ public class PageRanker {
         //System.out.println(doc.toJson());
         Document occurrences = (Document) doc.get("occurrences");
         long count_occurrences = occurrences.keySet().size();
-        double inverse_document_frequency = Math.log(5000.0 / (double) count_occurrences);
+        double inverse_document_frequency = 1 + Math.log(5001.0 / ((double) count_occurrences + 1));
         System.out.println("IDF For Word = " + inverse_document_frequency);
         ArrayList<RankerResult> Results = new ArrayList<>();
         for(String key : occurrences.keySet())
@@ -46,7 +46,7 @@ public class PageRanker {
                 continue;
 
             /** Initial Rank Of Page */
-            result.rank = inverse_document_frequency * normalized_term_frequency;
+            result.rank = Math.pow(inverse_document_frequency, 2) * Math.sqrt(term_frequency);
             try {
                 var host = new URL(result.url);
                 Number popularity = popularityMap.getOrDefault(host.getHost(),1);
@@ -68,6 +68,10 @@ public class PageRanker {
             int count = 1;
 
             for(Document place : (ArrayList<Document>) occurrence.get("places")){
+                String tag = (String)place.get("text_type");
+                //Ignore header tags
+                if(!tag.isBlank() && tag.charAt(0) == 'h' && !result.paragraphs.isEmpty())
+                    continue;
                 ParagraphData p = new ParagraphData();
                 p.exactWord = (String) place.get("exactWord");
                 p.location = (long) place.get("location");

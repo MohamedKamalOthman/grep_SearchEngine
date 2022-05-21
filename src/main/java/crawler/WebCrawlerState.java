@@ -33,7 +33,7 @@ public class WebCrawlerState {
 
     public boolean isFinished(){
         if(finished)
-            return finished;
+            return true;
         synchronized (manager){
             finished = manager.isFinishedCrawling();
             return finished;
@@ -87,8 +87,6 @@ public class WebCrawlerState {
     }
 
     public String getNextUrl() {
-        //if(isFinished())
-            //return "";
         return manager.priorityFetchUrl();
     }
 
@@ -126,16 +124,22 @@ public class WebCrawlerState {
         String url = manager.reCrawlFetchUrl();
         if (Objects.equals(url,""))
             return "";
-        //delete occuarrence
+        //delete occurrence
         //delete paragraph
         //set indexed to false
         long hash = 0;
         manager.cleanWebPageData(url);
         return url;
     }
+
     public void cleanWebPageData(String url){
         manager.cleanWebPageData(url);
     }
+
+    protected void finalizeCrawling() {
+        manager.updateUrls(finishedCrawlingUrls, 2);
+    }
+
     public static void main(String[] args) {
         DBManager manager = new DBManager();
         // Must Start With Adding Our Start Pages For The First Run Only

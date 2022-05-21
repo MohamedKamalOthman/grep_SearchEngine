@@ -44,11 +44,28 @@ public class QueryProcessor {
         }
 
 
-
-        HashMap<RankerResult, Double> aggregatedResults = new HashMap<>();
+        HashMap<String, RankerResult> aggregate = new HashMap<>();
         for(var ResultsList : results) {
             for(var Result : ResultsList) {
-                aggregatedResults.put(Result, aggregatedResults.getOrDefault(Result, 0.0) + Result.rank);
+                if(aggregate.containsKey(Result.url)) {
+                    RankerResult prev = aggregate.get(Result.url);
+                    Map<Long, ParagraphData> pMap = new HashMap<>();
+                    for(ParagraphData pData : prev.paragraphs) {
+                        pMap.put(pData.hash, pData);
+                    }
+                    for(ParagraphData pData : Result.paragraphs) {
+                        if(pMap.containsKey(pData.hash)) {
+                            pMap.get(pData.hash).refCount++;
+                        }
+                        else {
+                            prev.paragraphs.add(pData);
+                        }
+                    }
+
+                    prev.rank += Result.rank;
+                }
+
+                aggregate.putIfAbsent(Result.url, Result);
             }
         }
 
@@ -57,10 +74,9 @@ public class QueryProcessor {
             for(String phrase : strictQueries)
                 pHashSets.add(ranker.getPhraseMatchHashes(phrase));
 
-            for(Iterator<Map.Entry<RankerResult, Double>> it = aggregatedResults.entrySet().iterator(); it.hasNext(); ) {
-                Map.Entry<RankerResult, Double> resultAndRank = it.next();
-                RankerResult result = resultAndRank.getKey();
-                result.rank = resultAndRank.getValue();
+            for(Iterator<Map.Entry<String, RankerResult>> it = aggregate.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<String, RankerResult> resultAndRank = it.next();
+                RankerResult result = resultAndRank.getValue();
                 boolean found = false;
                 for (ParagraphData paragraph : result.topParagraphs) {
                     boolean matched = true;
@@ -81,13 +97,21 @@ public class QueryProcessor {
             }
         }
 
-        ArrayList<RankerResult> rankedPages = new ArrayList<>(aggregatedResults.keySet());
+        ArrayList<RankerResult> rankedPages = new ArrayList<>(aggregate.values());
         rankedPages.sort(((o1, o2) -> Double.compare(o2.rank, o1.rank)));
+        if(!strictSearch) {
+            for(RankerResult result : rankedPages) {
+                ParagraphData topParagraph = Collections.max(result.paragraphs, Comparator.comparing(c -> c.refCount));
+                if(result.topParagraphs.isEmpty()) {
+                    result.topParagraphs.add(topParagraph);
+                }
+                else {
+                    result.topParagraphs.set(0, topParagraph);
+                }
 
-
-//        for(var Result : RankedPages) {
-//            System.out.println(Result);
-//        }
+                ranker.prefetchParagraph(topParagraph.hash);
+            }
+        }
 
         // Get Paragraphs From Database
         ranker.setParagraphsMap();

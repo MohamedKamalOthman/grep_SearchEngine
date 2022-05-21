@@ -66,7 +66,7 @@ public class DBManager {
 
         List<String> seedUrls = new ArrayList<>();
         seedUrls.add("https://en.wikipedia.org/wiki/Main_Page");
-        seedUrls.add("https://codeforces.com");
+        //seedUrls.add("https://codeforces.com");
         seedUrls.add("https://stackoverflow.com");
         List<FetchedUrl> seed = new ArrayList<>();
         URL url;

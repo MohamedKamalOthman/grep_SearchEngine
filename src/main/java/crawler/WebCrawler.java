@@ -36,7 +36,6 @@ public class WebCrawler implements Runnable {
         while(true) {
             while(Objects.equals(link, "") && !state.isFinished()) {
                 try {
-                    // TODO Better Use Wait And Notify
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -53,6 +52,8 @@ public class WebCrawler implements Runnable {
             crawl(link);
             link = state.getNextUrl();
         }
+
+        state.finalizeCrawling();
 
         while (reCrawling){
             link = state.getUrlReCrawl();
@@ -82,20 +83,17 @@ public class WebCrawler implements Runnable {
 
         state.urlCrawled(url);
     }
+
     private void reCrawl(String url) {
         DocumentWrapper wDoc = new DocumentWrapper(request(url));
         Document doc = wDoc.doc;
 
         if (doc != null && !state.docExists(wDoc.crc)) {
-            String host = null;
-            try {
-                host = new URL(url).getHost();
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
             state.cleanWebPageData(url);
             state.refreshDocument(wDoc, url);
-        }else System.out.println("\u001B[43m=====================================================================\u001B[0m");
+        }
+        else
+            System.out.println("\u001B[43m=====================================================================\u001B[0m");
 
     }
 
