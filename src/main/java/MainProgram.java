@@ -1,17 +1,16 @@
-package crawler;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-
+import crawler.WebCrawler;
+import crawler.WebCrawlerState;
 import database.DBManager;
 import indexer.PageIndexer;
 import pages.ConcurrentHTMLPageSaver;
 import pages.FileHtmlPageSaver;
 import pages.FileUrlListHandler;
 
-public class CrawlerTest {
-    private static final String pathName = "." + File.separator + "Files" + File.separator;
+import java.io.File;
+import java.util.ArrayList;
+
+public class MainProgram {
+    private static final String PATH_NAME = "." + File.separator + "Files" + File.separator;
     private static final DBManager manager = new DBManager();
 
     public static void main(String[] args) {
@@ -21,7 +20,7 @@ public class CrawlerTest {
 
         // Finished Crawling
         // Start Indexing
-        PageIndexer indexer = new PageIndexer(pathName, manager);
+        PageIndexer indexer = new PageIndexer(PATH_NAME, manager);
         indexer.indexAll();
     }
 
@@ -32,12 +31,12 @@ public class CrawlerTest {
         manager.resetCrawledStatus();
 
         ArrayList<WebCrawler> crawlers = new ArrayList<>();
-        ConcurrentHTMLPageSaver htmlSaver = new ConcurrentHTMLPageSaver(new FileHtmlPageSaver(pathName, manager));
+        ConcurrentHTMLPageSaver htmlSaver = new ConcurrentHTMLPageSaver(new FileHtmlPageSaver(PATH_NAME, manager));
         htmlSaver.start();
         FileUrlListHandler urlListHandler = new FileUrlListHandler("Urls.txt");
 
         for(int i = 1; i <= nThreads; ++i) {
-            crawlers.add(new WebCrawler(manager.priorityFetchUrl(), new WebCrawlerState(i, urlListHandler, htmlSaver, manager)));
+            crawlers.add(new WebCrawler(manager.priorityFetchUrl(), new WebCrawlerState(i, urlListHandler, htmlSaver, manager), true));
         }
 
         for (WebCrawler w : crawlers) {

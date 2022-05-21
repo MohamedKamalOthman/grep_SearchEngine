@@ -9,31 +9,32 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
 public class PageRanker {
-    private final DBManager Manager;
+    private final DBManager manager;
     private final HashMap<String,Number> popularityMap;
-    private static HashMap<Long,String> paragraphsMap = new HashMap<>();
+    private static final HashMap<Long,String> paragraphsMap = new HashMap<>();
     protected static HashMap<Long,String> fetchedParagraphsMap = new HashMap<>();
     public PageRanker(DBManager manager) {
-        this.Manager = manager;
-        popularityMap = Manager.getPopularity();
+        this.manager = manager;
+        popularityMap = this.manager.getPopularity();
     }
 
-    public ArrayList<RankerResult> GetSingleWordResults(String word, boolean strictSearch){
-        String stemmed_word = Stemmer.stemWord(word);
-        if(stemmed_word == null)
+    public List<RankerResult> getSingleWordResults(String word, boolean strictSearch){
+        String stemmedWord = Stemmer.stemWord(word);
+        if(stemmedWord == null)
             return null;
-        Document doc = Manager.getWordDocument(stemmed_word);
+        Document doc = manager.getWordDocument(stemmedWord);
         if(doc == null)
             return new ArrayList<>();
         Document occurrences = (Document) doc.get("occurrences");
-        long count_occurrences = occurrences.keySet().size();
+        long countOccurrences = occurrences.keySet().size();
         /** Inverse Document Frequency */
-        double inverse_document_frequency = Math.log(5000.0 / ((double) count_occurrences));
+        double inverseDocumentFrequency = Math.log(5000.0 / (countOccurrences));
 
-        ArrayList<RankerResult> Results = new ArrayList<>();
+        ArrayList<RankerResult> results = new ArrayList<>();
         for(String key : occurrences.keySet())
         {
             RankerResult result = new RankerResult();
@@ -42,28 +43,28 @@ public class PageRanker {
             long totalLength = (long)occurrence.get("length");
             int term_frequency = (int)occurrence.get("term_frequency");
             /** Normalized Term Frequency */
-            double normalized_term_frequency = (double) (term_frequency) / (double) totalLength;
-            if(normalized_term_frequency > 0.5)
+            double normalizedTermFrequency = (double) (term_frequency) / (double) totalLength;
+            if(normalizedTermFrequency > 0.5)
                 continue;
 
             /** Initial Rank Of Page ( RANK = IDF * NTF) */
-            result.rank = inverse_document_frequency  * normalized_term_frequency ;
+            result.rank = inverseDocumentFrequency  * normalizedTermFrequency ;
 
             try {
                 var host = new URL(result.url);
                 Number popularity = popularityMap.getOrDefault(host.getHost(),1);
                 /** Add Popularity To Rank */
-                result.rank *= Math.abs(Math.log( (double)((int)popularity) / 5000.0));
+                result.rank *= Math.abs(Math.log( 1.01 + ((int)popularity) / 5000.0));
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
-            Document total_counts = (Document) occurrence.get("total_count");
-            for(String k : total_counts.keySet())
+            Document totalCount = (Document) occurrence.get("total_count");
+            for(String k : totalCount.keySet())
             {
                 int importance = HTMLParserUtilities.getTagImportance(k);
-                int count = (int) total_counts.get(k);
+                int count = (int) totalCount.get(k);
                 /** HTML Tag Importance Factor */
-                result.rank *= (double)importance * ((double) count / (double) term_frequency);
+                result.rank *= ((double) count / (double) term_frequency) * importance;
             }
             result.paragraphs = new ArrayList<>();
             result.topParagraphs = new ArrayList<>();
@@ -100,25 +101,25 @@ public class PageRanker {
             paragraphsMap.put(result.topParagraphs.get(0).hash,"");
 
             //finally, add the result
-            Results.add(result);
+            results.add(result);
         }
-        return Results;
+        return results;
     }
 
     public Set<Long> getPhraseMatchHashes(String phrase)
     {
-        return Manager.getExactPhraseParagraphs(phrase);
+        return manager.getExactPhraseParagraphs(phrase);
     }
 
     public void setParagraphsMap(){
         //after getting all results fetch all data from database only the paragraphs we need which in paragraphMap
-        fetchedParagraphsMap = Manager.findParagraphs(paragraphsMap.keySet().stream().toList());
+        fetchedParagraphsMap = manager.findParagraphs(paragraphsMap.keySet().stream().toList());
     }
 
     public static void main(String[] args) {
         DBManager db = new DBManager();
         PageRanker pageRanker = new PageRanker(db);
-        var result = pageRanker.GetSingleWordResults("page", false);
+        var result = pageRanker.getSingleWordResults("page", false);
         result.sort(((o1, o2) -> {
             return Double.compare(o2.rank, o1.rank);
         }));

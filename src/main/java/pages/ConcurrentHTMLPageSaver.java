@@ -55,6 +55,7 @@ public class ConcurrentHTMLPageSaver implements Runnable, IHtmlPageSaver {
                 thread.interrupt();
                 return;
             }
+
             htmlPageSaver.save(currentTask.wDoc, currentTask.url);
         }
     }

@@ -124,10 +124,10 @@ public class WebCrawlerState {
         String url = manager.reCrawlFetchUrl();
         if (Objects.equals(url,""))
             return "";
+
         //delete occurrence
         //delete paragraph
         //set indexed to false
-        long hash = 0;
         manager.cleanWebPageData(url);
         return url;
     }
@@ -138,20 +138,5 @@ public class WebCrawlerState {
 
     protected void finalizeCrawling() {
         manager.updateUrls(finishedCrawlingUrls, 2);
-    }
-
-    public static void main(String[] args) {
-        DBManager manager = new DBManager();
-        // Must Start With Adding Our Start Pages For The First Run Only
-        String pathName = "." + File.separator + "Files" + File.separator;
-        WebCrawlerState state = new WebCrawlerState(1, new FileUrlListHandler("urls.txt"), new FileHtmlPageSaver(pathName, manager), manager);
-        state.addFetchedUrl(new FetchedUrl("lalalal", null, null));
-        state.addFetchedUrl(new FetchedUrl("https://codeforces.com", null, null));
-        state.addFetchedUrl(new FetchedUrl("forkfork", null, null));
-        state.addFetchedUrl(new FetchedUrl("https://stackoverflow.com", null, null));
-        state.addFetchedUrl(new FetchedUrl("lalalal", null, null));
-        state.addFetchedUrl(new FetchedUrl("lele", null, null));
-
-        state.saveFetchedUrls();
     }
 }

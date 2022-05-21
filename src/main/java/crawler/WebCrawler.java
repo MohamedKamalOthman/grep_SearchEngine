@@ -15,12 +15,13 @@ public class WebCrawler implements Runnable {
     private final String firstLink;
     private final Thread thread;
     private final WebCrawlerState state;
-    private boolean reCrawling = true;
+    private final boolean reCrawling;
 
-    WebCrawler(String firstLink, WebCrawlerState state) {
+    public WebCrawler(String firstLink, WebCrawlerState state, boolean reCrawl) {
         thread = new Thread(this);
         this.state = state;
         this.firstLink = firstLink;
+        this.reCrawling = reCrawl;
         System.out.println("crawler " + this.state.getID() + " Created");
         thread.start();
     }

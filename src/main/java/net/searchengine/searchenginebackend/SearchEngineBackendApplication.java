@@ -36,24 +36,8 @@ public class SearchEngineBackendApplication {
     }
 
     @CrossOrigin("http://localhost:4200")
-    @GetMapping("/api/find/{s}")
-    public List<Document> find(@PathVariable int s) {
-        Document query = new Document().append("crawled", s);
-        List<Document> docs = new ArrayList<>();
-        try(MongoCursor<Document> cursor = crawler.find(query).cursor()) {
-            while (cursor.hasNext()) {
-                docs.add(cursor.next());
-                System.out.println(docs);
-            }
-        }
-
-        return docs;
-    }
-
-    @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/grep/{s}")
     public List<Document> grep(@PathVariable String s) {
-        //TODO refactor this to dbManager
         queries.updateOne(new Document(),Updates.addToSet("q",s.toLowerCase()),new UpdateOptions().upsert(true));
         return processor.rankQuery(s);
     }
@@ -68,7 +52,6 @@ public class SearchEngineBackendApplication {
     @CrossOrigin("http://localhost:4200")
     @GetMapping("/api/prevQueries")
     public List<String> prevQueries(){
-        //TODO refactor this to dbManager
         var l = (List<String>) queries.find(new Document()).first().get("q");
         Collections.reverse(l);
         return  l;

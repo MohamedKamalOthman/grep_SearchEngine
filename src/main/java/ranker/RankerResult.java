@@ -30,12 +30,14 @@ public class RankerResult {
 
         return result;
     }
+
     public Document toJSON(){
         return new Document()
                 .append("title",title)
                 .append("p", PageRanker.fetchedParagraphsMap.get(topParagraphs.get(0).hash))
                 .append("url",url);
     }
+
     @Override
     public int hashCode() {
         return url.hashCode();

@@ -38,7 +38,7 @@ public class QueryProcessor {
 
         List<List<RankerResult>> results = new ArrayList<>();
         for(String word : query) {
-            var result = ranker.GetSingleWordResults(word, strictSearch);
+            var result = ranker.getSingleWordResults(word, strictSearch);
             if(result != null)
                 results.add(result);
         }
