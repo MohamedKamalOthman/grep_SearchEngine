@@ -28,11 +28,11 @@ public class PageRanker {
         Document doc = Manager.getWordDocument(stemmed_word);
         if(doc == null)
             return new ArrayList<>();
-        //System.out.println(doc.toJson());
         Document occurrences = (Document) doc.get("occurrences");
         long count_occurrences = occurrences.keySet().size();
-        double inverse_document_frequency = 1 + Math.log(5001.0 / ((double) count_occurrences + 1));
-        System.out.println("IDF For Word = " + inverse_document_frequency);
+        /** Inverse Document Frequency */
+        double inverse_document_frequency = Math.log(5000.0 / ((double) count_occurrences));
+
         ArrayList<RankerResult> Results = new ArrayList<>();
         for(String key : occurrences.keySet())
         {
@@ -41,16 +41,18 @@ public class PageRanker {
             result.url = (String) occurrence.get("url");
             long totalLength = (long)occurrence.get("length");
             int term_frequency = (int)occurrence.get("term_frequency");
+            /** Normalized Term Frequency */
             double normalized_term_frequency = (double) (term_frequency) / (double) totalLength;
             if(normalized_term_frequency > 0.5)
                 continue;
 
-            /** Initial Rank Of Page */
-            result.rank = Math.pow(inverse_document_frequency, 2) * Math.sqrt(term_frequency);
+            /** Initial Rank Of Page ( RANK = IDF * NTF) */
+            result.rank = inverse_document_frequency  * normalized_term_frequency ;
+
             try {
                 var host = new URL(result.url);
                 Number popularity = popularityMap.getOrDefault(host.getHost(),1);
-                // Update Rank With Popularity Of The Page Host
+                /** Add Popularity To Rank */
                 result.rank *= Math.abs(Math.log( (double)((int)popularity) / 5000.0));
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -60,12 +62,12 @@ public class PageRanker {
             {
                 int importance = HTMLParserUtilities.getTagImportance(k);
                 int count = (int) total_counts.get(k);
-                // Update Rank According To Tag In Which The Word is Present
+                /** HTML Tag Importance Factor */
                 result.rank *= (double)importance * ((double) count / (double) term_frequency);
             }
             result.paragraphs = new ArrayList<>();
             result.topParagraphs = new ArrayList<>();
-            int count = 1;
+            int count_exact = 1;
 
             for(Document place : (ArrayList<Document>) occurrence.get("places")){
                 String tag = (String)place.get("text_type");
@@ -75,16 +77,16 @@ public class PageRanker {
                 ParagraphData p = new ParagraphData();
                 p.exactWord = (String) place.get("exactWord");
                 p.location = (long) place.get("location");
-                p.hash = (long)place.get("paragraph");
+                p.hash = (long) place.get("paragraph");
                 result.paragraphs.add(p);
-                if(((String) place.get("exactWord")).equals(word)){
+                if((place.get("exactWord")).equals(word)){
                     result.topParagraphs.add(p);
-                    count++;
+                    count_exact++;
                 }
             }
 
-            // Update Rank Of Pages With The Exact Word
-            result.rank *= (count / (double) totalLength);
+            /** Increase Importance Of Pages With Exact Word */
+            result.rank *= (count_exact / (double) totalLength);
             result.title = (String)occurrence.get("title");
             if(result.topParagraphs.isEmpty())
             {

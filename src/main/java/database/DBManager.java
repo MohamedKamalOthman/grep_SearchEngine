@@ -161,7 +161,7 @@ public class DBManager {
             try {
                 var result = Crawler.bulkWrite(crawlerBulkWrite);
                 long count = Crawler.countDocuments();
-                if (count >= 600) {
+                if (count >= 5000) {
                     finishedCrawling = true;
                 }
                 return result;
@@ -504,21 +504,22 @@ public class DBManager {
     public void cleanWebPageData(String url) {
         Document query = new Document().append("url", url);
         long hash = 0L;
-        //fetch old hash and reset indexed to false
+        /** Fetch old hash and Reset indexed to false */
         try {
             hash = (long) (PageSaver.findOneAndUpdate(query, Updates.set("indexed", false)).get("hash"));
         } catch (Exception e) {
             e.printStackTrace();
             return;
         }
-        //delete occurrences
+        /** Delete occurrences */
         query = new Document();
         SearchIndex.updateMany(query, Updates.unset("occurrences." + hash), new UpdateOptions().bypassDocumentValidation(true));
-        //delete paragraph
+        /** Delete paragraph */
         Paragraphs.deleteMany(Filters.where("(" + hash + " ^ (this.hash & 0xffffffff)) == 0"));
     }
 
     public Set<Long> getExactPhraseParagraphs(String phrase) {
+        /** Search For Exact Phrase In All Paragraphs */
         Bson textFilter = Filters.text('\"' + phrase + '\"', new TextSearchOptions().caseSensitive(false));
         FindIterable<Document> result = Paragraphs.find(textFilter).projection(fields(include("hash"), exclude("_id")));
         Set<Long> hashes = new HashSet<>();
@@ -532,7 +533,7 @@ public class DBManager {
             }
             hashes.add(hash);
         }
-
+        /** Return Hashes Of Found Paragraphs */
         return hashes;
     }
 
