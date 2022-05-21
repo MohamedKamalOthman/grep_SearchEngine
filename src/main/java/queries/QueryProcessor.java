@@ -24,23 +24,17 @@ public class QueryProcessor {
         if(rawQuery.isBlank())
             return new ArrayList<>();
 
-
         rawQuery = rawQuery.strip();
         List<String> strictQueries = new ArrayList<>();
 
         Pattern p = Pattern.compile("\"([^\"]*)\"");
         Matcher m = p.matcher(rawQuery);
         while (m.find()) {
-            strictQueries.add(m.group(1).strip().toLowerCase().replaceAll("\\s+", " "));
+            strictQueries.add(m.group(1).strip().toLowerCase());
         }
         boolean strictSearch = !strictQueries.isEmpty();
 
-//        if(rawQuery.charAt(0) == '"' && rawQuery.charAt(rawQuery.length() - 1) == '"') {
-//            rawQuery = rawQuery.substring(1, rawQuery.length() - 1);
-//            strictSearch = true;
-//        }
-
-        String[] query = rawQuery.toLowerCase().split("\\s+");
+        String[] query = rawQuery.toLowerCase().strip().replaceAll("\"", " ").split("\\s+");
 
         List<List<RankerResult>> results = new ArrayList<>();
         for(String word : query) {
@@ -131,7 +125,7 @@ public class QueryProcessor {
 
         QueryProcessor magic = new QueryProcessor(new DBManager());
         long start = System.currentTimeMillis();
-        magic.rankQuery("\"codeforces systems\"");
+        magic.rankQuery("\"codeforces\"");
         System.out.println("Took " + (System.currentTimeMillis() - start) + "ms to run!");
     }
 }

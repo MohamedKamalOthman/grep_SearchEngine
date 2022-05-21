@@ -1,6 +1,7 @@
 package ranker;
 
 import org.bson.Document;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -32,7 +33,7 @@ public class RankerResult {
     public Document toJSON(){
         return new Document()
                 .append("title",title)
-                .append("p", PageRanker.paragraphsMap.get(topParagraphs.get(0).hash))
+                .append("p", PageRanker.fetchedParagraphsMap.get(topParagraphs.get(0).hash))
                 .append("url",url);
     }
     @Override
@@ -40,4 +41,13 @@ public class RankerResult {
         return url.hashCode();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        return this.hashCode() == o.hashCode();
+    }
 }
